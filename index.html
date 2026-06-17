@@ -54,7 +54,7 @@ const APTOS_INICIAIS = [
   { id:"apto2901", nome:"Apto 2901", endereco:"", proprietario:"prop1", ativo:true },
 ];
 const PROPRIETARIOS_INICIAIS = [
-  { id:"prop1", nome:"Proprietário 2901", email:"", telefone:"", percRepasse:70 },
+  { id:"prop1", nome:"Proprietário 2901", email:"", telefone:"" },
 ];
 
 const R = (n) => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -74,7 +74,7 @@ function StatusBadge({efetivada}) {
 }
 
 // Gera PDF do relatório de repasse no estilo do modelo da Camilla
-function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, percRepasse) {
+function gerarRelatorioPDF(prop, apto, mes, reservasDoMes) {
   const nomeMes = MESES[mes];
   const ano = 2026;
   const bruto = reservasDoMes.reduce((s,r)=>s+r.valorBruto,0);
@@ -85,21 +85,43 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, percRepasse) {
   const despesasOp = limpeza + outras;
   const liquidoPlat = bruto - comPlat;
   const totalReceber = liquidoPlat - comAdm;
+  // Repasse líquido ao proprietário = Bruto - Comissão Plataforma - Comissão Administração - Despesas Operacionais
   const repasseFinal = totalReceber - despesasOp;
+  const percAdmMedio = liquidoPlat > 0 ? (comAdm / liquidoPlat * 100) : 0;
 
   const linhasHospedes = reservasDoMes.map(r => `
     <tr>
       <td>${r.hospede}</td>
+      <td><span class="plat-pill" style="background:${CORES_PLAT[r.plataforma]||'#64748b'}">${r.plataforma}</span></td>
       <td>${r.periodo}</td>
       <td style="text-align:right">${R(r.valorBruto)}</td>
       <td style="text-align:right">${R(r.comissaoPlat)}</td>
       <td style="text-align:right"><strong>${R(r.valorBruto - r.comissaoPlat)}</strong></td>
     </tr>`).join("");
 
+  // Agrupa por plataforma para o gráfico
+  const porPlatMap = {};
+  reservasDoMes.forEach(r => {
+    if (!porPlatMap[r.plataforma]) porPlatMap[r.plataforma] = { bruto:0, qtd:0 };
+    porPlatMap[r.plataforma].bruto += r.valorBruto;
+    porPlatMap[r.plataforma].qtd += 1;
+  });
+  const platList = Object.keys(porPlatMap);
+  const maxPlatBruto = Math.max(...platList.map(p=>porPlatMap[p].bruto), 1);
+  const graficoPlataformas = platList.map(p => {
+    const w = (porPlatMap[p].bruto / maxPlatBruto * 100).toFixed(0);
+    return `
+    <div class="bar-row">
+      <div class="bar-label"><span class="plat-pill" style="background:${CORES_PLAT[p]||'#64748b'}">${p}</span> <span class="bar-qtd">${porPlatMap[p].qtd} reserva(s)</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%; background:${CORES_PLAT[p]||'#64748b'}"></div></div>
+      <div class="bar-val">${R(porPlatMap[p].bruto)}</div>
+    </div>`;
+  }).join("");
+
   const comprovantesHtml = [];
   reservasDoMes.forEach(r => {
     (r.comprovantes||[]).forEach((c, i) => {
-      comprovantesHtml.push(`<div class="comp"><div class="comp-label">${r.hospede} — ${c.nome||('Comprovante '+(i+1))}</div>${c.dataUrl && c.tipo && c.tipo.startsWith('image') ? `<img src="${c.dataUrl}" />` : `<div class="comp-doc">📄 ${c.nome||'arquivo anexado'}</div>`}</div>`);
+      comprovantesHtml.push(`<div class="comp"><div class="comp-label">${r.hospede} (${r.plataforma}) — ${c.nome||('Comprovante '+(i+1))}</div>${c.dataUrl && c.tipo && c.tipo.startsWith('image') ? `<img src="${c.dataUrl}" />` : `<div class="comp-doc">📄 ${c.nome||'arquivo anexado'}</div>`}</div>`);
     });
   });
 
@@ -107,26 +129,37 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, percRepasse) {
   win.document.write(`
   <html><head><meta charset="utf-8"><title>Relatório ${nomeMes} ${ano} - ${apto.nome}</title>
   <style>
-    * { box-sizing:border-box; font-family: Georgia, 'Times New Roman', serif; }
-    body { padding:32px; color:#1a1a1a; max-width:800px; margin:0 auto; }
-    h1 { font-size:18px; border-bottom:3px solid #1a1a1a; padding-bottom:10px; margin-bottom:4px; }
-    .sub { font-size:12px; color:#444; margin-bottom:20px; }
-    h2 { font-size:13px; background:#1a1a1a; color:#fff; padding:6px 10px; margin:22px 0 8px; }
-    table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px; }
-    th, td { border:1px solid #ccc; padding:6px 8px; text-align:left; }
-    th { background:#f0f0f0; }
-    .resumo { display:flex; gap:0; border:1px solid #1a1a1a; margin-bottom:10px; }
-    .resumo div { flex:1; padding:10px; border-right:1px solid #1a1a1a; font-size:11px; }
-    .resumo div:last-child { border-right:none; background:#1a1a1a; color:#fff; }
-    .resumo .val { font-size:15px; font-weight:bold; margin-top:4px; }
-    .final { background:#f0f0f0; font-weight:bold; }
-    .negativo { color:#b91c1c; }
-    .footer { margin-top:30px; text-align:center; font-size:11px; color:#444; border-top:1px solid #ccc; padding-top:14px; }
-    .comp { margin-bottom:14px; page-break-inside:avoid; }
-    .comp-label { font-size:11px; font-weight:bold; margin-bottom:4px; }
-    .comp img { max-width:280px; border:1px solid #ccc; border-radius:4px; }
-    .comp-doc { font-size:11px; padding:8px; background:#f5f5f5; border-radius:4px; }
-    @media print { body{padding:10px;} }
+    * { box-sizing:border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; padding:32px; color:#1e293b; max-width:800px; margin:0 auto; line-height:1.5; background:#fff; }
+    h1 { font-size:20px; color:#fff; background:linear-gradient(135deg,#0ea5e9,#6366f1); padding:16px 20px; border-radius:10px 10px 0 0; margin-bottom:0; font-weight:800; }
+    .sub { font-size:12px; color:#475569; margin-bottom:20px; background:#f0f9ff; padding:12px 20px; border-radius:0 0 10px 10px; border:1px solid #bae6fd; border-top:none; }
+    h2 { font-size:13px; background:#0ea5e9; color:#fff; padding:8px 14px; margin:24px 0 10px; font-weight:700; border-radius:6px; }
+    table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:14px; }
+    th, td { border:1px solid #e2e8f0; padding:7px 9px; text-align:left; }
+    th { background:#e0f2fe; color:#0c4a6e; font-weight:700; }
+    .resumo { display:flex; gap:0; border-radius:10px; overflow:hidden; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+    .resumo div { flex:1; padding:12px 10px; font-size:11px; color:#475569; }
+    .resumo div:nth-child(1) { background:#f1f5f9; }
+    .resumo div:nth-child(2) { background:#fef2f2; color:#991b1b; }
+    .resumo div:nth-child(3) { background:#fff7ed; color:#9a3412; }
+    .resumo div:nth-child(4) { background:#fefce8; color:#854d0e; }
+    .resumo div:last-child { background:linear-gradient(135deg,#10b981,#059669); color:#fff; font-weight:700; }
+    .resumo .val { font-size:16px; font-weight:800; margin-top:4px; }
+    .final { background:#f0fdf4; font-weight:700; }
+    .negativo { color:#dc2626; }
+    .footer { margin-top:30px; text-align:center; font-size:11px; color:#64748b; border-top:2px solid #e0f2fe; padding-top:14px; }
+    .comp { margin-bottom:14px; page-break-inside:avoid; background:#f8fafc; padding:10px; border-radius:8px; }
+    .comp-label { font-size:11px; font-weight:700; margin-bottom:6px; color:#334155; }
+    .comp img { max-width:280px; border:1px solid #cbd5e1; border-radius:6px; }
+    .comp-doc { font-size:11px; padding:8px; background:#fff; border-radius:4px; }
+    .plat-pill { color:#fff; border-radius:12px; padding:2px 9px; font-size:10px; font-weight:700; display:inline-block; }
+    .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .bar-label { width:170px; font-size:11px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .bar-qtd { color:#64748b; font-size:10px; }
+    .bar-track { flex:1; background:#f1f5f9; border-radius:6px; height:16px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:6px; }
+    .bar-val { width:90px; text-align:right; font-size:12px; font-weight:700; color:#334155; }
+    @media print { body{padding:14px;} }
   </style></head>
   <body>
     <h1>RELATÓRIO DE GESTÃO — TEMPORADA</h1>
@@ -136,19 +169,24 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, percRepasse) {
     <div class="resumo">
       <div>Receita Bruta<div class="val">${R(bruto)}</div>${reservasDoMes.length} hóspede(s)</div>
       <div>(–) Com. Plataformas<div class="val">${R(comPlat)}</div></div>
-      <div>(–) Com. Administradora<div class="val">${R(comAdm)}</div>${comAdm>0 ? Pct(comAdm/liquidoPlat)+' s/ líquido':''}</div>
+      <div>(–) Com. Administradora<div class="val">${R(comAdm)}</div>${percAdmMedio>0 ? percAdmMedio.toFixed(0)+'% s/ líquido':''}</div>
       <div>(–) Despesas Operac.<div class="val">${R(despesasOp)}</div>limpeza + outras</div>
-      <div>(=) REPASSE LÍQUIDO<div class="val">${R(repasseFinal * (percRepasse/100))}</div>ao proprietário</div>
+      <div>(=) REPASSE LÍQUIDO<div class="val">${R(repasseFinal)}</div>ao proprietário</div>
     </div>
 
-    <h2>2. HOSPEDAGENS DO MÊS</h2>
+    <h2>2. RECEITA POR PLATAFORMA</h2>
+    <div style="background:#f8fafc; border-radius:10px; padding:16px;">
+      ${graficoPlataformas}
+    </div>
+
+    <h2>3. HOSPEDAGENS DO MÊS</h2>
     <table>
-      <tr><th>Hóspede</th><th>Período</th><th>Valor Bruto</th><th>Com. Plataforma</th><th>Valor Líquido</th></tr>
+      <tr><th>Hóspede</th><th>Plataforma</th><th>Período</th><th>Valor Bruto</th><th>Com. Plataforma</th><th>Valor Líquido</th></tr>
       ${linhasHospedes}
-      <tr class="final"><td colspan="2">TOTAL — ${reservasDoMes.length} hóspede(s)</td><td style="text-align:right">${R(bruto)}</td><td style="text-align:right">${R(comPlat)}</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
+      <tr class="final"><td colspan="3">TOTAL — ${reservasDoMes.length} hóspede(s)</td><td style="text-align:right">${R(bruto)}</td><td style="text-align:right">${R(comPlat)}</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
     </table>
 
-    <h2>3. RESULTADO FINANCEIRO CONSOLIDADO</h2>
+    <h2>4. RESULTADO FINANCEIRO CONSOLIDADO</h2>
     <table>
       <tr><td>Receita Bruta</td><td style="text-align:right">${R(bruto)}</td></tr>
       <tr><td>(-) Comissões das Plataformas</td><td style="text-align:right" class="negativo">– ${R(comPlat)}</td></tr>
@@ -158,12 +196,10 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, percRepasse) {
       <tr><td>(-) Limpeza</td><td style="text-align:right" class="negativo">– ${R(limpeza)}</td></tr>
       <tr><td>(-) Outras Despesas</td><td style="text-align:right" class="negativo">– ${R(outras)}</td></tr>
       <tr class="final"><td>TOTAL DE DESPESAS OPERACIONAIS</td><td style="text-align:right" class="negativo">– ${R(despesasOp)}</td></tr>
-      <tr class="final"><td>REPASSE LÍQUIDO TOTAL (apto)</td><td style="text-align:right">${R(repasseFinal)}</td></tr>
-      <tr class="final"><td>REPASSE AO PROPRIETÁRIO (${percRepasse}%)</td><td style="text-align:right">${R(repasseFinal*(percRepasse/100))}</td></tr>
-      <tr><td>Taxa de Gestão (${100-percRepasse}%)</td><td style="text-align:right">${R(repasseFinal*((100-percRepasse)/100))}</td></tr>
+      <tr class="final"><td>REPASSE LÍQUIDO AO PROPRIETÁRIO</td><td style="text-align:right">${R(repasseFinal)}</td></tr>
     </table>
 
-    ${comprovantesHtml.length > 0 ? `<h2>4. COMPROVANTES DE DESPESAS</h2>${comprovantesHtml.join("")}` : ""}
+    ${comprovantesHtml.length > 0 ? `<h2>5. COMPROVANTES DE DESPESAS</h2>${comprovantesHtml.join("")}` : ""}
 
     <div class="footer">
       ${apto.endereco||""} — gerado em ${new Date().toLocaleDateString('pt-BR')}<br/>
@@ -196,7 +232,7 @@ function App() {
   const formVazio = {aptoId:"",hospede:"",plataforma:"Airbnb",periodo:"",mes:new Date().getMonth(),diarias:1,valorBruto:0,comissaoPlat:0,comissaoAdm:0,limpeza:160,outrasDespesas:0,efetivada:true,comprovantes:[]};
   const [form, setForm] = useState(formVazio);
   const [formApto, setFormApto] = useState({id:"",nome:"",endereco:"",proprietario:"",ativo:true});
-  const [formProp, setFormProp] = useState({id:"",nome:"",email:"",telefone:"",percRepasse:70});
+  const [formProp, setFormProp] = useState({id:"",nome:"",email:"",telefone:""});
 
   const saveAptos = (v) => { setAptos(v); try{localStorage.setItem("cbm_aptos",JSON.stringify(v))}catch{} };
   const saveProps = (v) => { setProprietarios(v); try{localStorage.setItem("cbm_props",JSON.stringify(v))}catch{} };
@@ -234,7 +270,8 @@ function App() {
     let reservasP = reservasCalc.filter(r=>aptosP.some(a=>a.id===r.aptoId));
     if (mesRepasse !== "todos") reservasP = reservasP.filter(r => r.mes === parseInt(mesRepasse));
     const liquido = reservasP.reduce((a,r)=>a+r.liquido,0);
-    return {...p,aptosCount:aptosP.length,reservas:reservasP.length,liquido,repasse:liquido*p.percRepasse/100};
+    // Repasse = líquido total (Bruto - Com.Plataforma - Com.Administração - Despesas), sem percentual extra
+    return {...p,aptosCount:aptosP.length,reservas:reservasP.length,liquido,repasse:liquido};
   }), [proprietarios,aptos,reservasCalc,mesRepasse]);
 
   // Reservas agrupadas por mês para tela de Reservas
@@ -261,7 +298,7 @@ function App() {
   const toggleEfetivada = (id) => { saveReservas(reservas.map(r => r.id===id ? {...r, efetivada: !r.efetivada} : r)); };
 
   const salvarApto = () => { if(!formApto.nome) return; const id=formApto.id||"apto"+Date.now(); const ex=aptos.find(a=>a.id===formApto.id); saveAptos(ex?aptos.map(a=>a.id===formApto.id?{...formApto}:a):[...aptos,{...formApto,id}]); setModalApto(false); setFormApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true}); };
-  const salvarProp = () => { if(!formProp.nome) return; const id=formProp.id||"prop"+Date.now(); const ex=proprietarios.find(p=>p.id===formProp.id); saveProps(ex?proprietarios.map(p=>p.id===formProp.id?{...formProp}:p):[...proprietarios,{...formProp,id}]); setModalProp(false); setFormProp({id:"",nome:"",email:"",telefone:"",percRepasse:70}); };
+  const salvarProp = () => { if(!formProp.nome) return; const id=formProp.id||"prop"+Date.now(); const ex=proprietarios.find(p=>p.id===formProp.id); saveProps(ex?proprietarios.map(p=>p.id===formProp.id?{...formProp}:p):[...proprietarios,{...formProp,id}]); setModalProp(false); setFormProp({id:"",nome:"",email:"",telefone:""}); };
   const nomeApto = (id) => aptos.find(a=>a.id===id)?.nome||id;
   const nomeProp = (id) => proprietarios.find(p=>p.id===id)?.nome||"—";
 
@@ -528,17 +565,16 @@ function App() {
           <div>
             <div style={{...c.row,marginBottom:14}}>
               <div><div style={c.title}>Proprietários</div><div style={c.sub}>{proprietarios.length} cadastrado(s)</div></div>
-              <button style={c.btn()} onClick={()=>{setFormProp({id:"",nome:"",email:"",telefone:"",percRepasse:70});setModalProp(true);}}>+ Novo</button>
+              <button style={c.btn()} onClick={()=>{setFormProp({id:"",nome:"",email:"",telefone:""});setModalProp(true);}}>+ Novo</button>
             </div>
             {proprietarios.map((p,i)=>(
               <div key={i} style={{...c.card,borderLeft:"3px solid #a78bfa"}}>
                 <div style={{...c.row,marginBottom:6}}>
                   <div style={{fontSize:15,fontWeight:800,color:"#f1f5f9"}}>{p.nome}</div>
-                  <span style={c.tag("#38bdf8")}>{p.percRepasse}% repasse</span>
                 </div>
                 {p.email && <div style={{fontSize:12,color:"#64748b"}}>{p.email}</div>}
                 {p.telefone && <div style={{fontSize:12,color:"#64748b"}}>{p.telefone}</div>}
-                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>Taxa gestão: <span style={{color:"#f87171",fontWeight:700}}>{100-p.percRepasse}%</span> · {aptos.filter(a=>a.proprietario===p.id).length} apto(s)</div>
+                <div style={{fontSize:12,color:"#64748b",marginTop:4}}>{aptos.filter(a=>a.proprietario===p.id).length} apto(s) gerenciado(s)</div>
                 <div style={{marginTop:10}}>
                   <button style={c.btnSm()} onClick={()=>{setFormProp({...p});setModalProp(true);}}>✏️ Editar</button>
                 </div>
@@ -565,14 +601,11 @@ function App() {
                 <div key={i} style={c.card}>
                   <div style={{...c.row,marginBottom:10}}>
                     <div style={{fontSize:15,fontWeight:800,color:"#f1f5f9"}}>{p.nome}</div>
-                    <span style={c.tag("#38bdf8")}>{p.percRepasse}%</span>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
                     {[
                       {l:"Reservas",v:p.reservas,c:"#a78bfa"},
-                      {l:"Líquido Total",v:R(p.liquido),c:"#34d399"},
-                      {l:"Repasse a Pagar",v:R(p.repasse),c:"#38bdf8"},
-                      {l:"Taxa de Gestão",v:R(p.liquido-p.repasse),c:"#f87171"},
+                      {l:"Repasse Líquido ao Proprietário",v:R(p.repasse),c:"#34d399"},
                     ].map((k,j)=>(
                       <div key={j} style={{background:"#0f172a",borderRadius:8,padding:"10px"}}>
                         <div style={{fontSize:10,color:"#64748b"}}>{k.l}</div>
@@ -586,7 +619,6 @@ function App() {
                     const bruto=ar.reduce((s,r)=>s+r.valorBruto,0);
                     const desp=ar.reduce((s,r)=>s+r.totalDespesas,0);
                     const liq=bruto-desp;
-                    const rep=liq*p.percRepasse/100;
                     return (
                       <div key={j} style={{padding:"10px",background:"#0f172a",borderRadius:8,marginBottom:6}}>
                         <div style={{...c.row,marginBottom:4}}>
@@ -594,11 +626,10 @@ function App() {
                           <span style={{fontSize:12,color:"#94a3b8"}}>{ar.length} reservas</span>
                         </div>
                         <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:8}}>
-                          <span style={{fontSize:11,color:"#64748b"}}>Líquido: <span style={{color:"#34d399",fontWeight:700}}>{R(liq)}</span></span>
-                          <span style={{fontSize:11,color:"#64748b"}}>Repasse: <span style={{color:"#38bdf8",fontWeight:700}}>{R(rep)}</span></span>
+                          <span style={{fontSize:11,color:"#64748b"}}>Repasse Líquido: <span style={{color:"#34d399",fontWeight:700}}>{R(liq)}</span></span>
                         </div>
                         {mesRepasse !== "todos" && ar.length > 0 && (
-                          <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>gerarRelatorioPDF(p, a, parseInt(mesRepasse), ar, p.percRepasse)}>
+                          <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>gerarRelatorioPDF(p, a, parseInt(mesRepasse), ar)}>
                             📄 Gerar Relatório PDF — {MESES[parseInt(mesRepasse)]}
                           </button>
                         )}
@@ -735,7 +766,7 @@ function App() {
             <div style={c.formRow}><label style={c.label}>Nome *</label><input style={c.input} value={formProp.nome} onChange={e=>setFormProp({...formProp,nome:e.target.value})} placeholder="Nome completo"/></div>
             <div style={c.formRow}><label style={c.label}>E-mail</label><input style={c.input} type="email" value={formProp.email} onChange={e=>setFormProp({...formProp,email:e.target.value})} placeholder="email@exemplo.com"/></div>
             <div style={c.formRow}><label style={c.label}>Telefone</label><input style={c.input} value={formProp.telefone} onChange={e=>setFormProp({...formProp,telefone:e.target.value})} placeholder="(00) 00000-0000"/></div>
-            <div style={c.formRow}><label style={c.label}>% Repasse ao Proprietário</label><input style={c.input} type="number" min={0} max={100} value={formProp.percRepasse} onChange={e=>setFormProp({...formProp,percRepasse:Number(e.target.value)})}/><div style={{fontSize:11,color:"#64748b",marginTop:4}}>Sua taxa de gestão será {100-formProp.percRepasse}%</div></div>
+            <div style={{fontSize:11,color:"#64748b",marginBottom:14,background:"#0f172a",padding:10,borderRadius:8}}>💡 O repasse é calculado automaticamente por reserva: Receita Bruta − Comissão Plataforma − Comissão Administração − Despesas.</div>
             <div style={{display:"flex",gap:10}}>
               <button style={{...c.btn("#334155"),flex:1,justifyContent:"center"}} onClick={()=>setModalProp(false)}>Cancelar</button>
               <button style={{...c.btn(),flex:1,justifyContent:"center"}} onClick={salvarProp}>Salvar</button>
