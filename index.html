@@ -62,6 +62,7 @@ const PROPRIETARIOS_INICIAIS = [
 const DESPESAS_INICIAIS = [];
 
 const R = (n) => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const parseValor = (v) => { if (v === "" || v === null || v === undefined) return 0; const s = String(v).replace(/[^0-9,\.]/g,"").replace(",","."); const n = parseFloat(s); return isNaN(n) ? 0 : n; };
 const Pct = (n) => (n*100).toFixed(1)+"%";
 const calcReserva = (r) => { const d=r.comissaoPlat+r.comissaoAdm+r.limpeza+r.outrasDespesas; return {...r,totalDespesas:d,liquido:r.valorBruto-d}; };
 const CORES_PLAT = { Airbnb:"#FF5A5F", Booking:"#003580", Direto:"#10b981", VRBO:"#1a6fdb", Outros:"#8b5cf6" };
@@ -265,8 +266,8 @@ function App() {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const formVazio = {aptoId:"",hospede:"",plataforma:"Airbnb",periodo:"",mes:new Date().getMonth(),diarias:1,valorBruto:0,comissaoPlat:0,comissaoAdm:0,limpeza:160,outrasDespesas:0,efetivada:true,comprovantes:[]};
-  const formDespesaVazia = {aptoId:"",categoria:"Diarista",descricao:"",valor:0,mes:new Date().getMonth(),data:"",comprovantes:[]};
+  const formVazio = {aptoId:"",hospede:"",plataforma:"Airbnb",periodo:"",mes:new Date().getMonth(),diarias:1,valorBruto:"",comissaoPlat:"",comissaoAdm:"",limpeza:"160",outrasDespesas:"",efetivada:true,comprovantes:[]};
+  const formDespesaVazia = {aptoId:"",categoria:"Diarista",descricao:"",valor:"",mes:new Date().getMonth(),data:"",comprovantes:[]};
   const [formDespesa, setFormDespesa] = useState(formDespesaVazia);
   const [form, setForm] = useState(formVazio);
   const [formApto, setFormApto] = useState({id:"",nome:"",endereco:"",proprietario:"",ativo:true});
@@ -333,14 +334,18 @@ function App() {
 
   const salvarReserva = () => {
     if (!form.aptoId||!form.hospede) return;
+    const formParsed = { ...form, valorBruto:parseValor(form.valorBruto), comissaoPlat:parseValor(form.comissaoPlat), comissaoAdm:parseValor(form.comissaoAdm), limpeza:parseValor(form.limpeza), outrasDespesas:parseValor(form.outrasDespesas) };
     let nova;
-    if (editReserva!==null){ nova=reservas.map(r=>r.id===editReserva?{...form,id:editReserva,comprovantes:r_old(r)}:r); }
-    else{ nova=[...reservas,{...form,id:Date.now()}]; }
-    function r_old(){ const ex = reservas.find(x=>x.id===editReserva); return ex ? ex.comprovantes : []; }
+    if (editReserva!==null){
+      const existente = reservas.find(x=>x.id===editReserva);
+      const comprovantesAntigos = existente ? existente.comprovantes : [];
+      nova=reservas.map(r=>r.id===editReserva?{...formParsed,id:editReserva,comprovantes:comprovantesAntigos}:r);
+    }
+    else{ nova=[...reservas,{...formParsed,id:Date.now()}]; }
     saveReservas(nova);
     setModalReserva(false); setEditReserva(null); setForm(formVazio);
   };
-  const abrirEditar = (r) => { setForm({aptoId:r.aptoId,hospede:r.hospede,plataforma:r.plataforma,periodo:r.periodo,mes:r.mes,diarias:r.diarias,valorBruto:r.valorBruto,comissaoPlat:r.comissaoPlat,comissaoAdm:r.comissaoAdm,limpeza:r.limpeza,outrasDespesas:r.outrasDespesas,efetivada:r.efetivada,comprovantes:r.comprovantes||[]}); setEditReserva(r.id); setModalReserva(true); };
+  const abrirEditar = (r) => { setForm({aptoId:r.aptoId,hospede:r.hospede,plataforma:r.plataforma,periodo:r.periodo,mes:r.mes,diarias:r.diarias,valorBruto:String(r.valorBruto).replace(".",","),comissaoPlat:String(r.comissaoPlat).replace(".",","),comissaoAdm:String(r.comissaoAdm).replace(".",","),limpeza:String(r.limpeza).replace(".",","),outrasDespesas:String(r.outrasDespesas).replace(".",","),efetivada:r.efetivada,comprovantes:r.comprovantes||[]}); setEditReserva(r.id); setModalReserva(true); };
   const excluirReserva = (id) => { if(window.confirm("Excluir esta reserva?")) saveReservas(reservas.filter(r=>r.id!==id)); };
   const toggleEfetivada = (id) => { saveReservas(reservas.map(r => r.id===id ? {...r, efetivada: !r.efetivada} : r)); };
 
@@ -352,17 +357,18 @@ function App() {
   // CRUD de Despesas Gerais do Mês
   const salvarDespesa = () => {
     if (!formDespesa.aptoId || !formDespesa.descricao || !formDespesa.valor) return;
+    const despesaParsed = { ...formDespesa, valor: parseValor(formDespesa.valor) };
     if (editDespesa !== null) {
       const existente = despesas.find(d => d.id === editDespesa);
       const comprovantesAntigos = existente ? existente.comprovantes : [];
-      saveDespesas(despesas.map(d => d.id === editDespesa ? {...formDespesa, id: editDespesa, comprovantes: comprovantesAntigos} : d));
+      saveDespesas(despesas.map(d => d.id === editDespesa ? {...despesaParsed, id: editDespesa, comprovantes: comprovantesAntigos} : d));
     } else {
-      saveDespesas([...despesas, {...formDespesa, id: Date.now()}]);
+      saveDespesas([...despesas, {...despesaParsed, id: Date.now()}]);
     }
     setModalDespesa(false); setEditDespesa(null); setFormDespesa(formDespesaVazia);
   };
   const abrirEditarDespesa = (d) => {
-    setFormDespesa({aptoId:d.aptoId, categoria:d.categoria, descricao:d.descricao, valor:d.valor, mes:d.mes, data:d.data, comprovantes:d.comprovantes||[]});
+    setFormDespesa({aptoId:d.aptoId, categoria:d.categoria, descricao:d.descricao, valor:String(d.valor).replace(".",","), mes:d.mes, data:d.data, comprovantes:d.comprovantes||[]});
     setEditDespesa(d.id);
     setModalDespesa(true);
   };
@@ -455,7 +461,7 @@ function App() {
     mesHeader:{fontSize:13,fontWeight:800,color:"#38bdf8",margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:0.5,display:"flex",alignItems:"center",gap:8},
   };
 
-  const liquidoPreview = Number(form.valorBruto||0) - Number(form.comissaoPlat||0) - Number(form.comissaoAdm||0) - Number(form.limpeza||0) - Number(form.outrasDespesas||0);
+  const liquidoPreview = parseValor(form.valorBruto) - parseValor(form.comissaoPlat) - parseValor(form.comissaoAdm) - parseValor(form.limpeza) - parseValor(form.outrasDespesas);
 
   const isModalDespesa = typeof modalComprovantes === "string" && modalComprovantes.startsWith("despesa:");
   const modalDespesaId = isModalDespesa ? Number(modalComprovantes.split(":")[1]) : null;
@@ -810,8 +816,8 @@ function App() {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
               <div style={c.formRow}><label style={c.label}>Período</label><input style={c.input} value={form.periodo} onChange={e=>setForm({...form,periodo:e.target.value})} placeholder="10 a 13/Jul"/></div>
               <div style={c.formRow}><label style={c.label}>Mês</label><select style={c.select} value={form.mes} onChange={e=>setForm({...form,mes:parseInt(e.target.value)})}>{MESES.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
-              <div style={c.formRow}><label style={c.label}>Nº Diárias</label><input style={c.input} type="number" value={form.diarias} onChange={e=>setForm({...form,diarias:Number(e.target.value)})}/></div>
-              <div style={c.formRow}><label style={c.label}>Valor Bruto (R$)</label><input style={c.input} type="number" value={form.valorBruto} onChange={e=>setForm({...form,valorBruto:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Nº Diárias</label><input style={c.input} type="number" inputMode="numeric" value={form.diarias} onChange={e=>setForm({...form,diarias:parseInt(e.target.value)||1})}/></div>
+              <div style={c.formRow}><label style={c.label}>Valor Bruto (R$)</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.valorBruto} onChange={e=>setForm({...form,valorBruto:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
             </div>
             <div style={c.formRow}>
               <label style={c.label}>Status da Reserva</label>
@@ -822,14 +828,14 @@ function App() {
             </div>
             <div style={{fontSize:11,color:"#64748b",fontWeight:700,textTransform:"uppercase",margin:"4px 0 8px"}}>Despesas</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Comissão Plataforma</label><input style={c.input} type="number" value={form.comissaoPlat} onChange={e=>setForm({...form,comissaoPlat:Number(e.target.value)})}/></div>
-              <div style={c.formRow}><label style={c.label}>Comissão ADM</label><input style={c.input} type="number" value={form.comissaoAdm} onChange={e=>setForm({...form,comissaoAdm:Number(e.target.value)})}/></div>
-              <div style={c.formRow}><label style={c.label}>Limpeza</label><input style={c.input} type="number" value={form.limpeza} onChange={e=>setForm({...form,limpeza:Number(e.target.value)})}/></div>
-              <div style={c.formRow}><label style={c.label}>Outras Despesas</label><input style={c.input} type="number" value={form.outrasDespesas} onChange={e=>setForm({...form,outrasDespesas:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Comissão Plataforma</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.comissaoPlat} onChange={e=>setForm({...form,comissaoPlat:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Comissão ADM</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.comissaoAdm} onChange={e=>setForm({...form,comissaoAdm:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Limpeza</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.limpeza} onChange={e=>setForm({...form,limpeza:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Outras Despesas</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.outrasDespesas} onChange={e=>setForm({...form,outrasDespesas:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
             </div>
-            {form.valorBruto>0 && (
+            {parseValor(form.valorBruto)>0 && (
               <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",marginBottom:12,display:"flex",gap:16}}>
-                <div><span style={{fontSize:11,color:"#64748b"}}>Despesas: </span><span style={{fontWeight:700,color:"#f87171"}}>{R(Number(form.comissaoPlat)+Number(form.comissaoAdm)+Number(form.limpeza)+Number(form.outrasDespesas))}</span></div>
+                <div><span style={{fontSize:11,color:"#64748b"}}>Despesas: </span><span style={{fontWeight:700,color:"#f87171"}}>{R(parseValor(form.comissaoPlat)+parseValor(form.comissaoAdm)+parseValor(form.limpeza)+parseValor(form.outrasDespesas))}</span></div>
                 <div><span style={{fontSize:11,color:"#64748b"}}>Líquido: </span><span style={{fontWeight:700,color:"#34d399"}}>{R(liquidoPreview)}</span></div>
               </div>
             )}
@@ -894,7 +900,7 @@ function App() {
             <div style={c.formRow}><label style={c.label}>Categoria</label><select style={c.select} value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>{CATEGORIAS_DESPESA.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
             <div style={c.formRow}><label style={c.label}>Descrição *</label><input style={c.input} value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Diarista - Lorena"/></div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="number" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={fmtValor(formDespesa.valor)} onChange={e=>setFormDespesa({...formDespesa,valor:parseValor(e.target.value)})}/></div>
               <div style={c.formRow}><label style={c.label}>Mês</label><select style={c.select} value={formDespesa.mes} onChange={e=>setFormDespesa({...formDespesa,mes:parseInt(e.target.value)})}>{MESES.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
             </div>
             <div style={c.formRow}><label style={c.label}>Data (opcional)</label><input style={c.input} type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/></div>
