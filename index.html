@@ -218,9 +218,16 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
     .bar-track { flex:1; background:#f1f5f9; border-radius:6px; height:16px; overflow:hidden; }
     .bar-fill { height:100%; border-radius:6px; }
     .bar-val { width:90px; text-align:right; font-size:12px; font-weight:700; color:#334155; }
-    @media print { body{padding:14px;} }
+    .topbar-pdf { display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; margin-bottom:16px; gap:10px; }
+    .btn-voltar { background:#e2e8f0; color:#334155; border:none; border-radius:6px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
+    .btn-imprimir { background:linear-gradient(135deg,#0ea5e9,#6366f1); color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
+    @media print { .topbar-pdf { display:none; } body{padding:14px;} }
   </style></head>
   <body>
+    <div class="topbar-pdf">
+      <button onclick="window.close()" class="btn-voltar">✕ Fechar</button>
+      <button onclick="window.print()" class="btn-imprimir">🖨️ Imprimir / Salvar PDF</button>
+    </div>
     <h1>RELATÓRIO DE GESTÃO — TEMPORADA</h1>
     <div class="sub">${apto.nome} ${apto.endereco?`| ${apto.endereco}`:""} | ${nomeMes}/${ano}<br/>Proprietário: <strong>${prop.nome}</strong> | Gestora: <strong>Casa by Milla</strong></div>
 
@@ -282,10 +289,7 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
       <tr class="final"><td>(=) Receita Líquida das Plataformas</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
       <tr><td>(-) Comissão Administradora</td><td style="text-align:right" class="negativo">– ${R(comAdm)}</td></tr>
       <tr class="final"><td>(=) TOTAL A RECEBER</td><td style="text-align:right">${R(totalReceber)}</td></tr>
-      <tr><td>(-) Limpeza (por reserva)</td><td style="text-align:right" class="negativo">– ${R(limpezaReservas)}</td></tr>
-      <tr><td>(-) Outras Despesas (por reserva)</td><td style="text-align:right" class="negativo">– ${R(outrasReservas)}</td></tr>
-      <tr><td>(-) Despesas Gerais do Mês</td><td style="text-align:right" class="negativo">– ${R(totalDespesasGerais)}</td></tr>
-      <tr class="final"><td>TOTAL DE DESPESAS OPERACIONAIS</td><td style="text-align:right" class="negativo">– ${R(despesasOp)}</td></tr>
+      <tr><td>(-) Despesas Operacionais <span style="font-size:10px; color:#64748b;">(limpeza, diaristas, manutenção e outros)</span></td><td style="text-align:right" class="negativo">– ${R(despesasOp)}</td></tr>
       <tr class="final"><td>REPASSE LÍQUIDO AO PROPRIETÁRIO</td><td style="text-align:right">${R(repasseFinal)}</td></tr>
     </table>
 
@@ -295,7 +299,6 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
       ${apto.endereco||""} — gerado em ${new Date().toLocaleDateString('pt-BR')}<br/>
       <strong>Casa by Milla</strong> — Gestão de Imóveis por Temporada
     </div>
-    <script>window.onload = () => window.print();<\/script>
   </body></html>`);
   win.document.close();
 }
@@ -367,12 +370,14 @@ function App() {
   const ocupacaoDash = useMemo(() => {
     if (visaoDash !== "mensal") return null;
     const ano = 2026;
-    return aptos.map(a => {
+    // Filtra apenas o apto selecionado (se houver) e o mês correto
+    const aptosVisiveis = aptoFiltro === "todos" ? aptos : aptos.filter(a => a.id === aptoFiltro);
+    return aptosVisiveis.map(a => {
       const ar = reservasCalc.filter(r => r.aptoId === a.id);
       const oc = calcOcupacao(ar, mesDash, ano);
       return { ...a, ...oc };
     });
-  }, [aptos, reservasCalc, visaoDash, mesDash]);
+  }, [aptos, aptoFiltro, reservasCalc, visaoDash, mesDash]);
 
   const despesasFiltradas = useMemo(() => despesas.filter(d=>(aptoFiltroDespesa==="todos"||d.aptoId===aptoFiltroDespesa)&&d.mes===mesFiltroDespesa), [despesas,aptoFiltroDespesa,mesFiltroDespesa]);
 
@@ -398,7 +403,14 @@ function App() {
       if (!grupos[r.mes]) grupos[r.mes] = [];
       grupos[r.mes].push(r);
     });
-    return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(mes => ({ mes, reservas: grupos[mes] }));
+    return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(mes => ({
+      mes,
+      reservas: grupos[mes].sort((a,b) => {
+        const da = a.checkin ? new Date(a.checkin+"T00:00:00").getTime() : a.mes*100;
+        const db = b.checkin ? new Date(b.checkin+"T00:00:00").getTime() : b.mes*100;
+        return da - db;
+      })
+    }));
   }, [reservasFiltradas]);
 
   const salvarReserva = () => {
