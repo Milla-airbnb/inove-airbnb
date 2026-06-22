@@ -54,6 +54,19 @@ const sbFetch = async (tabela, metodo = "GET", corpo = null, filtro = "") => {
 };
 
 // Converte entre formato do app (camelCase) e banco (snake_case)
+// Comprovantes ficam SOMENTE no aparelho local (localStorage)
+// Os dados financeiros sincronizam na nuvem, mas as fotos não
+const getComprovantesLocais = (tabela, id) => {
+  try {
+    const key = `comp_${tabela}_${id}`;
+    const s = localStorage.getItem(key);
+    return s ? JSON.parse(s) : [];
+  } catch { return []; }
+};
+const saveComprovantesLocais = (tabela, id, comps) => {
+  try { localStorage.setItem(`comp_${tabela}_${id}`, JSON.stringify(comps)); } catch{}
+};
+
 const reservaParaBanco = (r) => ({
   id: r.id,
   apto_id: r.aptoId,
@@ -69,7 +82,7 @@ const reservaParaBanco = (r) => ({
   limpeza: r.limpeza,
   outras_despesas: r.outrasDespesas,
   efetivada: r.efetivada,
-  comprovantes: r.comprovantes || [],
+  comprovantes: [], // não sincroniza fotos
 });
 const reservaDoBanco = (r) => ({
   id: r.id,
@@ -86,14 +99,14 @@ const reservaDoBanco = (r) => ({
   limpeza: Number(r.limpeza),
   outrasDespesas: Number(r.outras_despesas),
   efetivada: r.efetivada,
-  comprovantes: r.comprovantes || [],
+  comprovantes: getComprovantesLocais("reservas", r.id), // carrega do aparelho local
 });
 const aptoParaBanco = (a) => ({ id: a.id, nome: a.nome, endereco: a.endereco || "", proprietario: a.proprietario || "", ativo: a.ativo });
 const aptoDoBanco = (a) => ({ id: a.id, nome: a.nome, endereco: a.endereco || "", proprietario: a.proprietario || "", ativo: a.ativo });
 const propParaBanco = (p) => ({ id: p.id, nome: p.nome, email: p.email || "", telefone: p.telefone || "" });
 const propDoBanco = (p) => ({ id: p.id, nome: p.nome, email: p.email || "", telefone: p.telefone || "" });
-const despesaParaBanco = (d) => ({ id: d.id, apto_id: d.aptoId, categoria: d.categoria, descricao: d.descricao, valor: d.valor, mes: d.mes, data: d.data || "", comprovantes: d.comprovantes || [] });
-const despesaDoBanco = (d) => ({ id: d.id, aptoId: d.apto_id, categoria: d.categoria, descricao: d.descricao, valor: Number(d.valor), mes: d.mes, data: d.data || "", comprovantes: d.comprovantes || [] });
+const despesaParaBanco = (d) => ({ id: d.id, apto_id: d.aptoId, categoria: d.categoria, descricao: d.descricao, valor: d.valor, mes: d.mes, data: d.data || "", comprovantes: [] });
+const despesaDoBanco = (d) => ({ id: d.id, aptoId: d.apto_id, categoria: d.categoria, descricao: d.descricao, valor: Number(d.valor), mes: d.mes, data: d.data || "", comprovantes: getComprovantesLocais("despesas", d.id) });
 
 const PLATAFORMAS = ["Airbnb", "Booking", "Direto", "VRBO", "Outros"];
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -406,6 +419,40 @@ function App() {
     };
     carregar();
   }, []);
+
+  // Migra dados do localStorage (versão antiga) para o Supabase
+  const migrarDadosLocais = async () => {
+    setSincronizando(true);
+    try {
+      const aptosLocal = JSON.parse(localStorage.getItem("cbm_aptos") || "[]");
+      const propsLocal = JSON.parse(localStorage.getItem("cbm_props") || "[]");
+      const reservasLocal = JSON.parse(localStorage.getItem("cbm_reservas") || "[]");
+      const despesasLocal = JSON.parse(localStorage.getItem("cbm_despesas") || "[]");
+
+      if (aptosLocal.length > 0) await Promise.all(aptosLocal.map(a => sbFetch("aptos", "POST", aptoParaBanco(a))));
+      if (propsLocal.length > 0) await Promise.all(propsLocal.map(p => sbFetch("proprietarios", "POST", propParaBanco(p))));
+      if (reservasLocal.length > 0) await Promise.all(reservasLocal.map(r => sbFetch("reservas", "POST", reservaParaBanco(r))));
+      if (despesasLocal.length > 0) await Promise.all(despesasLocal.map(d => sbFetch("despesas", "POST", despesaParaBanco(d))));
+
+      // Recarrega tudo do Supabase após migração
+      const [aptosDb, propsDb, reservasDb, despesasDb] = await Promise.all([
+        sbFetch("aptos?order=nome"),
+        sbFetch("proprietarios?order=nome"),
+        sbFetch("reservas?order=id"),
+        sbFetch("despesas?order=id"),
+      ]);
+      if (aptosDb?.length > 0) setAptos(aptosDb.map(aptoDoBanco));
+      if (propsDb?.length > 0) setProprietarios(propsDb.map(propDoBanco));
+      if (reservasDb?.length > 0) setReservas(reservasDb.map(reservaDoBanco));
+      if (despesasDb?.length > 0) setDespesas(despesasDb.map(despesaDoBanco));
+
+      alert(`✅ Migração concluída!\n${reservasLocal.length} reservas, ${aptosLocal.length} aptos, ${despesasLocal.length} despesas enviados para a nuvem.`);
+    } catch(e) {
+      console.error("Erro na migração:", e);
+      alert("❌ Erro na migração. Tente novamente.");
+    }
+    setSincronizando(false);
+  };
   const [aptoFiltro, setAptoFiltro] = useState("todos");
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [visaoDash, setVisaoDash] = useState("anual"); // anual | mensal
@@ -603,7 +650,7 @@ function App() {
         setReservas(prev => {
           const nova = prev.map(r => r.id === reservaId ? { ...r, comprovantes: [...(r.comprovantes||[]), novoComp] } : r);
           const reservaAtualizada = nova.find(r => r.id === reservaId);
-          if (reservaAtualizada) sbFetch("reservas", "POST", reservaParaBanco(reservaAtualizada));
+          if (reservaAtualizada) saveComprovantesLocais("reservas", reservaId, reservaAtualizada.comprovantes);
           return nova;
         });
       };
@@ -612,7 +659,12 @@ function App() {
     e.target.value = "";
   };
   const removerComprovante = (reservaId, idx) => {
-    saveReservas(reservas.map(r => r.id===reservaId ? {...r, comprovantes: r.comprovantes.filter((_,i)=>i!==idx)} : r));
+    setReservas(prev => {
+      const nova = prev.map(r => r.id===reservaId ? {...r, comprovantes: r.comprovantes.filter((_,i)=>i!==idx)} : r);
+      const r = nova.find(r => r.id===reservaId);
+      if (r) saveComprovantesLocais("reservas", reservaId, r.comprovantes);
+      return nova;
+    });
   };
 
   // Upload de comprovantes (despesas gerais)
@@ -628,7 +680,7 @@ function App() {
           const nova = prev.map(d => d.id == despesaId ? { ...d, comprovantes: [...(d.comprovantes||[]), novoComp] } : d);
           // eslint-disable-next-line eqeqeq
           const despAtualizada = nova.find(d => d.id == despesaId);
-          if (despAtualizada) sbFetch("despesas", "POST", despesaParaBanco(despAtualizada));
+          if (despAtualizada) saveComprovantesLocais("despesas", despesaId, despAtualizada.comprovantes);
           return nova;
         });
       };
@@ -637,8 +689,14 @@ function App() {
     e.target.value = "";
   };
   const removerComprovanteDespesa = (despesaId, idx) => {
-    // eslint-disable-next-line eqeqeq
-    saveDespesas(despesas.map(d => d.id == despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d));
+    setDespesas(prev => {
+      // eslint-disable-next-line eqeqeq
+      const nova = prev.map(d => d.id == despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d);
+      // eslint-disable-next-line eqeqeq
+      const d = nova.find(d => d.id == despesaId);
+      if (d) saveComprovantesLocais("despesas", despesaId, d.comprovantes);
+      return nova;
+    });
   };
 
   const navItems = [{id:"dashboard",label:"Dashboard",icon:"📊"},{id:"reservas",label:"Reservas",icon:"📅"},{id:"despesas",label:"Despesas",icon:"🧾"},{id:"aptos",label:"Aptos",icon:"🏠"},{id:"proprietarios",label:"Proprietários",icon:"👤"},{id:"repasse",label:"Repasse",icon:"💰"}];
@@ -725,6 +783,23 @@ function App() {
           <div>
             <div style={c.title}>Dashboard</div>
             <div style={c.sub}>{visaoDash==="anual" ? "Consolidado 2026" : `${MESES[mesDash]} 2026`}</div>
+
+            {/* Banner de migração — aparece se houver dados locais não sincronizados */}
+            {(()=>{
+              try {
+                const r = JSON.parse(localStorage.getItem("cbm_reservas")||"[]");
+                if (r.length > 0) return (
+                  <div style={{background:"#1e3a5f",border:"1px solid #38bdf8",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#38bdf8",marginBottom:4}}>📤 Dados locais encontrados</div>
+                    <div style={{fontSize:12,color:"#94a3b8",marginBottom:10}}>{r.length} reservas no celular ainda não foram enviadas para a nuvem.</div>
+                    <button style={{...c.btn(),width:"100%",justifyContent:"center"}} onClick={migrarDadosLocais}>
+                      {sincronizando ? "🔄 Enviando..." : "☁️ Enviar dados para a nuvem agora"}
+                    </button>
+                  </div>
+                );
+              } catch{}
+              return null;
+            })()}
 
             <div style={c.toggle}>
               <div style={c.toggleBtn(visaoDash==="anual")} onClick={()=>setVisaoDash("anual")}>📅 Anual</div>
