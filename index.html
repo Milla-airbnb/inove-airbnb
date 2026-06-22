@@ -1039,7 +1039,7 @@ function App() {
             <div style={c.formRow}><label style={c.label}>Categoria</label><select style={c.select} value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>{CATEGORIAS_DESPESA.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
             <div style={c.formRow}><label style={c.label}>Descrição *</label><input style={c.input} value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Diarista - Lorena"/></div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={fmtValor(formDespesa.valor)} onChange={e=>setFormDespesa({...formDespesa,valor:parseValor(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
               <div style={c.formRow}><label style={c.label}>Mês</label><select style={c.select} value={formDespesa.mes} onChange={e=>setFormDespesa({...formDespesa,mes:parseInt(e.target.value)})}>{MESES.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
             </div>
             <div style={c.formRow}><label style={c.label}>Data (opcional)</label><input style={c.input} type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/></div>
