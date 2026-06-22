@@ -496,7 +496,8 @@ function App() {
       reader.onload = (ev) => {
         const novoComp = { nome: file.name, tipo: file.type, dataUrl: ev.target.result, data: new Date().toISOString() };
         setDespesas(prev => {
-          const nova = prev.map(d => d.id === despesaId ? { ...d, comprovantes: [...(d.comprovantes||[]), novoComp] } : d);
+          // eslint-disable-next-line eqeqeq
+          const nova = prev.map(d => d.id == despesaId ? { ...d, comprovantes: [...(d.comprovantes||[]), novoComp] } : d);
           try{localStorage.setItem("cbm_despesas",JSON.stringify(nova))}catch{}
           return nova;
         });
@@ -506,7 +507,8 @@ function App() {
     e.target.value = "";
   };
   const removerComprovanteDespesa = (despesaId, idx) => {
-    saveDespesas(despesas.map(d => d.id===despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d));
+    // eslint-disable-next-line eqeqeq
+    saveDespesas(despesas.map(d => d.id == despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d));
   };
 
   const navItems = [{id:"dashboard",label:"Dashboard",icon:"📊"},{id:"reservas",label:"Reservas",icon:"📅"},{id:"despesas",label:"Despesas",icon:"🧾"},{id:"aptos",label:"Aptos",icon:"🏠"},{id:"proprietarios",label:"Proprietários",icon:"👤"},{id:"repasse",label:"Repasse",icon:"💰"}];
@@ -556,8 +558,9 @@ function App() {
 
   const isModalDespesa = typeof modalComprovantes === "string" && modalComprovantes.startsWith("despesa:");
   const modalDespesaId = isModalDespesa ? Number(modalComprovantes.split(":")[1]) : null;
-  const reservaComprovantes = (modalComprovantes && !isModalDespesa) ? reservasCalc.find(r => r.id === modalComprovantes) : null;
-  const despesaComprovantes = isModalDespesa ? despesas.find(d => d.id === modalDespesaId) : null;
+  const reservaComprovantes = (modalComprovantes && !isModalDespesa) ? reservasCalc.find(r => r.id === modalComprovantes || r.id == modalComprovantes) : null;
+  // eslint-disable-next-line eqeqeq
+  const despesaComprovantes = isModalDespesa ? despesas.find(d => d.id == modalDespesaId) : null;
   const itemComprovantes = reservaComprovantes || despesaComprovantes;
 
   return (
