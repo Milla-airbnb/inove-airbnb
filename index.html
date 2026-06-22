@@ -36,21 +36,21 @@ const MESES_ABREV = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out"
 const CATEGORIAS_DESPESA = ["Diarista", "Manutenção", "Material de Limpeza", "Outros"];
 
 const RESERVAS_INICIAIS = [
-  { id:1, aptoId:"apto2901", hospede:"Renato", plataforma:"Airbnb", checkin:"2026-05-09", checkout:"2026-05-11", mes:4, diarias:2, valorBruto:636, comissaoPlat:77.51, comissaoAdm:139.62, limpeza:160, outrasDespesas:51.37, efetivada:true, comprovantes:[] },
-  { id:2, aptoId:"apto2901", hospede:"Wellington", plataforma:"Booking", checkin:"2026-05-15", checkout:"2026-05-17", mes:4, diarias:2, valorBruto:600, comissaoPlat:27.32, comissaoAdm:143.17, limpeza:160, outrasDespesas:29.90, efetivada:true, comprovantes:[] },
-  { id:3, aptoId:"apto2901", hospede:"Alcides", plataforma:"Airbnb", checkin:"2026-05-17", checkout:"2026-05-20", mes:4, diarias:3, valorBruto:712.8, comissaoPlat:92.66, comissaoAdm:155.04, limpeza:160, outrasDespesas:19.99, efetivada:true, comprovantes:[] },
-  { id:4, aptoId:"apto2901", hospede:"Rodrigo", plataforma:"Booking", checkin:"2026-05-21", checkout:"2026-05-24", mes:4, diarias:3, valorBruto:900, comissaoPlat:40.98, comissaoAdm:214.76, limpeza:160, outrasDespesas:50, efetivada:true, comprovantes:[] },
-  { id:5, aptoId:"apto2901", hospede:"Eduardo", plataforma:"Airbnb", checkin:"2026-05-29", checkout:"2026-05-31", mes:4, diarias:2, valorBruto:850, comissaoPlat:110.56, comissaoAdm:184.86, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:6, aptoId:"apto2901", hospede:"Karla", plataforma:"Booking", checkin:"2026-06-02", checkout:"2026-06-04", mes:5, diarias:2, valorBruto:486, comissaoPlat:63.18, comissaoAdm:105.70, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:7, aptoId:"apto2901", hospede:"Larissa", plataforma:"Airbnb", checkin:"2026-06-02", checkout:"2026-06-06", mes:5, diarias:4, valorBruto:720, comissaoPlat:32.78, comissaoAdm:171.81, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:8, aptoId:"apto2901", hospede:"Isabel", plataforma:"Booking", checkin:"2026-06-06", checkout:"2026-06-08", mes:5, diarias:2, valorBruto:527.31, comissaoPlat:68.55, comissaoAdm:114.69, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:9, aptoId:"apto2901", hospede:"Weles", plataforma:"Airbnb", checkin:"2026-06-12", checkout:"2026-06-14", mes:5, diarias:2, valorBruto:482, comissaoPlat:23, comissaoAdm:114.75, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:10, aptoId:"apto2901", hospede:"Antonio", plataforma:"Booking", checkin:"2026-06-16", checkout:"2026-06-18", mes:5, diarias:2, valorBruto:486, comissaoPlat:63.18, comissaoAdm:105.71, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:11, aptoId:"apto2901", hospede:"Emanuelhy", plataforma:"Booking", checkin:"2026-06-19", checkout:"2026-06-21", mes:5, diarias:2, valorBruto:555.66, comissaoPlat:72.24, comissaoAdm:120.85, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:12, aptoId:"apto2901", hospede:"Gabriel", plataforma:"Booking", checkin:"2026-06-26", checkout:"2026-06-28", mes:5, diarias:2, valorBruto:784.89, comissaoPlat:102.04, comissaoAdm:170.71, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:13, aptoId:"apto2901", hospede:"Rafael", plataforma:"Airbnb", checkin:"2026-06-30", checkout:"2026-07-04", mes:5, diarias:4, valorBruto:1097.45, comissaoPlat:52.35, comissaoAdm:261.28, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:14, aptoId:"apto2901", hospede:"Monica", plataforma:"Booking", checkin:"2026-07-04", checkout:"2026-07-08", mes:6, diarias:4, valorBruto:1425.6, comissaoPlat:185.33, comissaoAdm:310.07, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
-  { id:15, aptoId:"apto2901", hospede:"José Carlos", plataforma:"Booking", checkin:"2026-07-11", checkout:"2026-07-14", mes:6, diarias:3, valorBruto:1073.25, comissaoPlat:139.52, comissaoAdm:233.43, limpeza:160, outrasDespesas:0, efetivada:false, comprovantes:[] },
+  { id:1, aptoId:"apto2901", hospede:"Renato", plataforma:"Airbnb", periodo:"09 a 11/Mai", mes:4, diarias:2, valorBruto:636, comissaoPlat:77.51, comissaoAdm:139.62, limpeza:160, outrasDespesas:51.37, efetivada:true, comprovantes:[] },
+  { id:2, aptoId:"apto2901", hospede:"Wellington", plataforma:"Booking", periodo:"15 a 17/Mai", mes:4, diarias:2, valorBruto:600, comissaoPlat:27.32, comissaoAdm:143.17, limpeza:160, outrasDespesas:29.90, efetivada:true, comprovantes:[] },
+  { id:3, aptoId:"apto2901", hospede:"Alcides", plataforma:"Airbnb", periodo:"17 a 20/Mai", mes:4, diarias:3, valorBruto:712.8, comissaoPlat:92.66, comissaoAdm:155.04, limpeza:160, outrasDespesas:19.99, efetivada:true, comprovantes:[] },
+  { id:4, aptoId:"apto2901", hospede:"Rodrigo", plataforma:"Booking", periodo:"21 a 24/Mai", mes:4, diarias:3, valorBruto:900, comissaoPlat:40.98, comissaoAdm:214.76, limpeza:160, outrasDespesas:50, efetivada:true, comprovantes:[] },
+  { id:5, aptoId:"apto2901", hospede:"Eduardo", plataforma:"Airbnb", periodo:"29 a 31/Mai", mes:4, diarias:2, valorBruto:850, comissaoPlat:110.56, comissaoAdm:184.86, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:6, aptoId:"apto2901", hospede:"Karla", plataforma:"Booking", periodo:"02 a 04/Jun", mes:5, diarias:2, valorBruto:486, comissaoPlat:63.18, comissaoAdm:105.70, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:7, aptoId:"apto2901", hospede:"Larissa", plataforma:"Airbnb", periodo:"02 a 06/Jun", mes:5, diarias:4, valorBruto:720, comissaoPlat:32.78, comissaoAdm:171.81, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:8, aptoId:"apto2901", hospede:"Isabel", plataforma:"Booking", periodo:"06 a 08/Jun", mes:5, diarias:2, valorBruto:527.31, comissaoPlat:68.55, comissaoAdm:114.69, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:9, aptoId:"apto2901", hospede:"Weles", plataforma:"Airbnb", periodo:"12 a 14/Jun", mes:5, diarias:2, valorBruto:482, comissaoPlat:23, comissaoAdm:114.75, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:10, aptoId:"apto2901", hospede:"Antonio", plataforma:"Booking", periodo:"16 a 18/Jun", mes:5, diarias:2, valorBruto:486, comissaoPlat:63.18, comissaoAdm:105.71, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:11, aptoId:"apto2901", hospede:"Emanuelhy", plataforma:"Booking", periodo:"19 a 21/Jun", mes:5, diarias:2, valorBruto:555.66, comissaoPlat:72.24, comissaoAdm:120.85, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:12, aptoId:"apto2901", hospede:"Gabriel", plataforma:"Booking", periodo:"26 a 28/Jun", mes:5, diarias:2, valorBruto:784.89, comissaoPlat:102.04, comissaoAdm:170.71, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:13, aptoId:"apto2901", hospede:"Rafael", plataforma:"Airbnb", periodo:"30/Jun a 04/Jul", mes:5, diarias:4, valorBruto:1097.45, comissaoPlat:52.35, comissaoAdm:261.28, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:14, aptoId:"apto2901", hospede:"Monica", plataforma:"Booking", periodo:"04 a 08/Jul", mes:6, diarias:4, valorBruto:1425.6, comissaoPlat:185.33, comissaoAdm:310.07, limpeza:160, outrasDespesas:0, efetivada:true, comprovantes:[] },
+  { id:15, aptoId:"apto2901", hospede:"José Carlos", plataforma:"Booking", periodo:"11 a 14/Jul", mes:6, diarias:3, valorBruto:1073.25, comissaoPlat:139.52, comissaoAdm:233.43, limpeza:160, outrasDespesas:0, efetivada:false, comprovantes:[] },
 ];
 const APTOS_INICIAIS = [
   { id:"apto2901", nome:"Apto 2901", endereco:"", proprietario:"prop1", ativo:true },
@@ -62,43 +62,7 @@ const PROPRIETARIOS_INICIAIS = [
 const DESPESAS_INICIAIS = [];
 
 const R = (n) => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const parseValor = (v) => { if (v === "" || v === null || v === undefined) return 0; const s = String(v).replace(/[^0-9,\.]/g,"").replace(",","."); const n = parseFloat(s); return isNaN(n) ? 0 : n; };
-
-// Calcula dias ocupados num mês a partir das reservas (cada diária = 1 dia)
-const calcOcupacao = (reservas, mes, ano) => {
-  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-  const diasOcupados = new Set();
-  reservas.forEach(r => {
-    if (!r.checkin || !r.checkout) {
-      // fallback: usa diarias e mes
-      if (r.mes === mes) for (let d = 1; d <= r.diarias; d++) diasOcupados.add(d);
-      return;
-    }
-    const ci = new Date(r.checkin + "T00:00:00");
-    const co = new Date(r.checkout + "T00:00:00");
-    let cur = new Date(ci);
-    while (cur < co) {
-      if (cur.getFullYear() === ano && cur.getMonth() === mes) {
-        diasOcupados.add(cur.getDate());
-      }
-      cur.setDate(cur.getDate() + 1);
-    }
-  });
-  const ocupados = diasOcupados.size;
-  const vagos = diasNoMes - ocupados;
-  const taxa = diasNoMes > 0 ? Math.round(ocupados / diasNoMes * 100) : 0;
-  return { ocupados, vagos, diasNoMes, taxa };
-};
 const Pct = (n) => (n*100).toFixed(1)+"%";
-const formatPeriodo = (r) => {
-  if (r.checkin && r.checkout) {
-    const ci = new Date(r.checkin + "T00:00:00");
-    const co = new Date(r.checkout + "T00:00:00");
-    const fmt = (d) => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-    return `${fmt(ci)} a ${fmt(co)}`;
-  }
-  return r.periodo || "—";
-};
 const calcReserva = (r) => { const d=r.comissaoPlat+r.comissaoAdm+r.limpeza+r.outrasDespesas; return {...r,totalDespesas:d,liquido:r.valorBruto-d}; };
 const CORES_PLAT = { Airbnb:"#FF5A5F", Booking:"#003580", Direto:"#10b981", VRBO:"#1a6fdb", Outros:"#8b5cf6" };
 
@@ -114,9 +78,8 @@ function StatusBadge({efetivada}) {
 }
 
 // Gera PDF do relatório de repasse no estilo do modelo da Camilla
-function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupacao) {
+function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes) {
   despesasDoMes = despesasDoMes || [];
-  ocupacao = ocupacao || { ocupados:0, vagos:0, diasNoMes:0, taxa:0 };
   const nomeMes = MESES[mes];
   const ano = 2026;
   const bruto = reservasDoMes.reduce((s,r)=>s+r.valorBruto,0);
@@ -136,7 +99,7 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
     <tr>
       <td>${r.hospede}</td>
       <td><span class="plat-pill" style="background:${CORES_PLAT[r.plataforma]||'#64748b'}">${r.plataforma}</span></td>
-      <td>${formatPeriodo(r)}</td>
+      <td>${r.periodo}</td>
       <td style="text-align:right">${R(r.valorBruto)}</td>
       <td style="text-align:right">${R(r.comissaoPlat)}</td>
       <td style="text-align:right"><strong>${R(r.valorBruto - r.comissaoPlat)}</strong></td>
@@ -218,16 +181,9 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
     .bar-track { flex:1; background:#f1f5f9; border-radius:6px; height:16px; overflow:hidden; }
     .bar-fill { height:100%; border-radius:6px; }
     .bar-val { width:90px; text-align:right; font-size:12px; font-weight:700; color:#334155; }
-    .topbar-pdf { display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px 16px; border-radius:8px; margin-bottom:16px; gap:10px; }
-    .btn-voltar { background:#e2e8f0; color:#334155; border:none; border-radius:6px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
-    .btn-imprimir { background:linear-gradient(135deg,#0ea5e9,#6366f1); color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
-    @media print { .topbar-pdf { display:none; } body{padding:14px;} }
+    @media print { body{padding:14px;} }
   </style></head>
   <body>
-    <div class="topbar-pdf">
-      <button onclick="window.close()" class="btn-voltar">✕ Fechar</button>
-      <button onclick="window.print()" class="btn-imprimir">🖨️ Imprimir / Salvar PDF</button>
-    </div>
     <h1>RELATÓRIO DE GESTÃO — TEMPORADA</h1>
     <div class="sub">${apto.nome} ${apto.endereco?`| ${apto.endereco}`:""} | ${nomeMes}/${ano}<br/>Proprietário: <strong>${prop.nome}</strong> | Gestora: <strong>Casa by Milla</strong></div>
 
@@ -240,34 +196,12 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
       <div>(=) REPASSE LÍQUIDO<div class="val">${R(repasseFinal)}</div>ao proprietário</div>
     </div>
 
-    <h2>2. OCUPAÇÃO DO MÊS</h2>
-    <div style="background:#f8fafc; border-radius:10px; padding:16px; margin-bottom:6px;">
-      <div style="display:flex; gap:0; margin-bottom:10px;">
-        <div style="flex:1; text-align:center; padding:10px; background:#dcfce7; border-radius:8px 0 0 8px;">
-          <div style="font-size:11px; color:#166534;">🟢 Dias Ocupados</div>
-          <div style="font-size:28px; font-weight:800; color:#16a34a;">${ocupacao.ocupados}</div>
-        </div>
-        <div style="flex:1; text-align:center; padding:10px; background:#f1f5f9;">
-          <div style="font-size:11px; color:#475569;">⬜ Dias Vagos</div>
-          <div style="font-size:28px; font-weight:800; color:#94a3b8;">${ocupacao.vagos}</div>
-        </div>
-        <div style="flex:1; text-align:center; padding:10px; background:#eff6ff; border-radius:0 8px 8px 0;">
-          <div style="font-size:11px; color:#1d4ed8;">📊 Taxa de Ocupação</div>
-          <div style="font-size:28px; font-weight:800; color:#2563eb;">${ocupacao.taxa}%</div>
-        </div>
-      </div>
-      <div style="background:#e2e8f0; border-radius:6px; height:14px; overflow:hidden;">
-        <div style="width:${ocupacao.taxa}%; background:linear-gradient(90deg,#10b981,#0ea5e9); height:100%; border-radius:6px;"></div>
-      </div>
-      <div style="text-align:center; font-size:11px; color:#64748b; margin-top:6px;">${ocupacao.diasNoMes} dias no mês de ${MESES[mes]}</div>
-    </div>
-
-    <h2>3. RECEITA POR PLATAFORMA</h2>
+    <h2>2. RECEITA POR PLATAFORMA</h2>
     <div style="background:#f8fafc; border-radius:10px; padding:16px;">
       ${graficoPlataformas}
     </div>
 
-    <h2>4. HOSPEDAGENS DO MÊS</h2>
+    <h2>3. HOSPEDAGENS DO MÊS</h2>
     <table>
       <tr><th>Hóspede</th><th>Plataforma</th><th>Período</th><th>Valor Bruto</th><th>Com. Plataforma</th><th>Valor Líquido</th></tr>
       ${linhasHospedes}
@@ -275,30 +209,34 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
     </table>
 
     ${despesasDoMes.length > 0 ? `
-    <h2>5. DESPESAS GERAIS DO MÊS</h2>
+    <h2>4. DESPESAS GERAIS DO MÊS</h2>
     <table>
       <tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Comprovante</th></tr>
       ${linhasDespesasGerais}
       <tr class="final"><td colspan="3">TOTAL DESPESAS GERAIS</td><td style="text-align:right">${R(totalDespesasGerais)}</td><td></td></tr>
     </table>` : ""}
 
-    <h2>${despesasDoMes.length > 0 ? '6' : '5'}. RESULTADO FINANCEIRO CONSOLIDADO</h2>
+    <h2>${despesasDoMes.length > 0 ? '5' : '4'}. RESULTADO FINANCEIRO CONSOLIDADO</h2>
     <table>
       <tr><td>Receita Bruta</td><td style="text-align:right">${R(bruto)}</td></tr>
       <tr><td>(-) Comissões das Plataformas</td><td style="text-align:right" class="negativo">– ${R(comPlat)}</td></tr>
       <tr class="final"><td>(=) Receita Líquida das Plataformas</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
       <tr><td>(-) Comissão Administradora</td><td style="text-align:right" class="negativo">– ${R(comAdm)}</td></tr>
       <tr class="final"><td>(=) TOTAL A RECEBER</td><td style="text-align:right">${R(totalReceber)}</td></tr>
-      <tr><td>(-) Despesas Operacionais <span style="font-size:10px; color:#64748b;">(limpeza, diaristas, manutenção e outros)</span></td><td style="text-align:right" class="negativo">– ${R(despesasOp)}</td></tr>
+      <tr><td>(-) Limpeza (por reserva)</td><td style="text-align:right" class="negativo">– ${R(limpezaReservas)}</td></tr>
+      <tr><td>(-) Outras Despesas (por reserva)</td><td style="text-align:right" class="negativo">– ${R(outrasReservas)}</td></tr>
+      <tr><td>(-) Despesas Gerais do Mês</td><td style="text-align:right" class="negativo">– ${R(totalDespesasGerais)}</td></tr>
+      <tr class="final"><td>TOTAL DE DESPESAS OPERACIONAIS</td><td style="text-align:right" class="negativo">– ${R(despesasOp)}</td></tr>
       <tr class="final"><td>REPASSE LÍQUIDO AO PROPRIETÁRIO</td><td style="text-align:right">${R(repasseFinal)}</td></tr>
     </table>
 
-    ${comprovantesHtml.length > 0 ? `<h2>${despesasDoMes.length > 0 ? '7' : '6'}. COMPROVANTES DE DESPESAS</h2>${comprovantesHtml.join("")}` : ""}
+    ${comprovantesHtml.length > 0 ? `<h2>${despesasDoMes.length > 0 ? '6' : '5'}. COMPROVANTES DE DESPESAS</h2>${comprovantesHtml.join("")}` : ""}
 
     <div class="footer">
       ${apto.endereco||""} — gerado em ${new Date().toLocaleDateString('pt-BR')}<br/>
       <strong>Casa by Milla</strong> — Gestão de Imóveis por Temporada
     </div>
+    <script>window.onload = () => window.print();<\/script>
   </body></html>`);
   win.document.close();
 }
@@ -327,8 +265,8 @@ function App() {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const formVazio = {aptoId:"",hospede:"",plataforma:"Airbnb",checkin:"",checkout:"",mes:new Date().getMonth(),diarias:1,valorBruto:"",comissaoPlat:"",comissaoAdm:"",limpeza:"160",outrasDespesas:"",efetivada:true,comprovantes:[]};
-  const formDespesaVazia = {aptoId:"",categoria:"Diarista",descricao:"",valor:"",mes:new Date().getMonth(),data:"",comprovantes:[]};
+  const formVazio = {aptoId:"",hospede:"",plataforma:"Airbnb",periodo:"",mes:new Date().getMonth(),diarias:1,valorBruto:0,comissaoPlat:0,comissaoAdm:0,limpeza:160,outrasDespesas:0,efetivada:true,comprovantes:[]};
+  const formDespesaVazia = {aptoId:"",categoria:"Diarista",descricao:"",valor:0,mes:new Date().getMonth(),data:"",comprovantes:[]};
   const [formDespesa, setFormDespesa] = useState(formDespesaVazia);
   const [form, setForm] = useState(formVazio);
   const [formApto, setFormApto] = useState({id:"",nome:"",endereco:"",proprietario:"",ativo:true});
@@ -366,19 +304,6 @@ function App() {
     });
   }, [aptos,reservasCalc,visaoDash,mesDash]);
 
-  // Ocupação: para dashboard mensal ou repasse mensal
-  const ocupacaoDash = useMemo(() => {
-    if (visaoDash !== "mensal") return null;
-    const ano = 2026;
-    // Filtra apenas o apto selecionado (se houver) e o mês correto
-    const aptosVisiveis = aptoFiltro === "todos" ? aptos : aptos.filter(a => a.id === aptoFiltro);
-    return aptosVisiveis.map(a => {
-      const ar = reservasCalc.filter(r => r.aptoId === a.id);
-      const oc = calcOcupacao(ar, mesDash, ano);
-      return { ...a, ...oc };
-    });
-  }, [aptos, aptoFiltro, reservasCalc, visaoDash, mesDash]);
-
   const despesasFiltradas = useMemo(() => despesas.filter(d=>(aptoFiltroDespesa==="todos"||d.aptoId===aptoFiltroDespesa)&&d.mes===mesFiltroDespesa), [despesas,aptoFiltroDespesa,mesFiltroDespesa]);
 
   const repasses = useMemo(() => proprietarios.map(p=>{
@@ -403,40 +328,19 @@ function App() {
       if (!grupos[r.mes]) grupos[r.mes] = [];
       grupos[r.mes].push(r);
     });
-    return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(mes => ({
-      mes,
-      reservas: grupos[mes].sort((a,b) => {
-        const da = a.checkin ? new Date(a.checkin+"T00:00:00").getTime() : a.mes*100;
-        const db = b.checkin ? new Date(b.checkin+"T00:00:00").getTime() : b.mes*100;
-        return da - db;
-      })
-    }));
+    return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(mes => ({ mes, reservas: grupos[mes] }));
   }, [reservasFiltradas]);
 
   const salvarReserva = () => {
     if (!form.aptoId||!form.hospede) return;
-    // Auto-calcular diárias e mês a partir das datas
-    let diarias = form.diarias;
-    let mes = form.mes;
-    if (form.checkin && form.checkout) {
-      const ci = new Date(form.checkin + "T00:00:00");
-      const co = new Date(form.checkout + "T00:00:00");
-      const diff = Math.round((co - ci) / (1000 * 60 * 60 * 24));
-      if (diff > 0) diarias = diff;
-      mes = ci.getMonth();
-    }
-    const formParsed = { ...form, diarias, mes, valorBruto:parseValor(form.valorBruto), comissaoPlat:parseValor(form.comissaoPlat), comissaoAdm:parseValor(form.comissaoAdm), limpeza:parseValor(form.limpeza), outrasDespesas:parseValor(form.outrasDespesas) };
     let nova;
-    if (editReserva!==null){
-      const existente = reservas.find(x=>x.id===editReserva);
-      const comprovantesAntigos = existente ? existente.comprovantes : [];
-      nova=reservas.map(r=>r.id===editReserva?{...formParsed,id:editReserva,comprovantes:comprovantesAntigos}:r);
-    }
-    else{ nova=[...reservas,{...formParsed,id:Date.now()}]; }
+    if (editReserva!==null){ nova=reservas.map(r=>r.id===editReserva?{...form,id:editReserva,comprovantes:r_old(r)}:r); }
+    else{ nova=[...reservas,{...form,id:Date.now()}]; }
+    function r_old(){ const ex = reservas.find(x=>x.id===editReserva); return ex ? ex.comprovantes : []; }
     saveReservas(nova);
     setModalReserva(false); setEditReserva(null); setForm(formVazio);
   };
-  const abrirEditar = (r) => { setForm({aptoId:r.aptoId,hospede:r.hospede,plataforma:r.plataforma,checkin:r.checkin||"",checkout:r.checkout||"",mes:r.mes,diarias:r.diarias,valorBruto:String(r.valorBruto).replace(".",","),comissaoPlat:String(r.comissaoPlat).replace(".",","),comissaoAdm:String(r.comissaoAdm).replace(".",","),limpeza:String(r.limpeza).replace(".",","),outrasDespesas:String(r.outrasDespesas).replace(".",","),efetivada:r.efetivada,comprovantes:r.comprovantes||[]}); setEditReserva(r.id); setModalReserva(true); };
+  const abrirEditar = (r) => { setForm({aptoId:r.aptoId,hospede:r.hospede,plataforma:r.plataforma,periodo:r.periodo,mes:r.mes,diarias:r.diarias,valorBruto:r.valorBruto,comissaoPlat:r.comissaoPlat,comissaoAdm:r.comissaoAdm,limpeza:r.limpeza,outrasDespesas:r.outrasDespesas,efetivada:r.efetivada,comprovantes:r.comprovantes||[]}); setEditReserva(r.id); setModalReserva(true); };
   const excluirReserva = (id) => { if(window.confirm("Excluir esta reserva?")) saveReservas(reservas.filter(r=>r.id!==id)); };
   const toggleEfetivada = (id) => { saveReservas(reservas.map(r => r.id===id ? {...r, efetivada: !r.efetivada} : r)); };
 
@@ -448,18 +352,17 @@ function App() {
   // CRUD de Despesas Gerais do Mês
   const salvarDespesa = () => {
     if (!formDespesa.aptoId || !formDespesa.descricao || !formDespesa.valor) return;
-    const despesaParsed = { ...formDespesa, valor: parseValor(formDespesa.valor) };
     if (editDespesa !== null) {
       const existente = despesas.find(d => d.id === editDespesa);
       const comprovantesAntigos = existente ? existente.comprovantes : [];
-      saveDespesas(despesas.map(d => d.id === editDespesa ? {...despesaParsed, id: editDespesa, comprovantes: comprovantesAntigos} : d));
+      saveDespesas(despesas.map(d => d.id === editDespesa ? {...formDespesa, id: editDespesa, comprovantes: comprovantesAntigos} : d));
     } else {
-      saveDespesas([...despesas, {...despesaParsed, id: Date.now()}]);
+      saveDespesas([...despesas, {...formDespesa, id: Date.now()}]);
     }
     setModalDespesa(false); setEditDespesa(null); setFormDespesa(formDespesaVazia);
   };
   const abrirEditarDespesa = (d) => {
-    setFormDespesa({aptoId:d.aptoId, categoria:d.categoria, descricao:d.descricao, valor:String(d.valor).replace(".",","), mes:d.mes, data:d.data, comprovantes:d.comprovantes||[]});
+    setFormDespesa({aptoId:d.aptoId, categoria:d.categoria, descricao:d.descricao, valor:d.valor, mes:d.mes, data:d.data, comprovantes:d.comprovantes||[]});
     setEditDespesa(d.id);
     setModalDespesa(true);
   };
@@ -496,8 +399,7 @@ function App() {
       reader.onload = (ev) => {
         const novoComp = { nome: file.name, tipo: file.type, dataUrl: ev.target.result, data: new Date().toISOString() };
         setDespesas(prev => {
-          // eslint-disable-next-line eqeqeq
-          const nova = prev.map(d => d.id == despesaId ? { ...d, comprovantes: [...(d.comprovantes||[]), novoComp] } : d);
+          const nova = prev.map(d => d.id === despesaId ? { ...d, comprovantes: [...(d.comprovantes||[]), novoComp] } : d);
           try{localStorage.setItem("cbm_despesas",JSON.stringify(nova))}catch{}
           return nova;
         });
@@ -507,8 +409,7 @@ function App() {
     e.target.value = "";
   };
   const removerComprovanteDespesa = (despesaId, idx) => {
-    // eslint-disable-next-line eqeqeq
-    saveDespesas(despesas.map(d => d.id == despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d));
+    saveDespesas(despesas.map(d => d.id===despesaId ? {...d, comprovantes: d.comprovantes.filter((_,i)=>i!==idx)} : d));
   };
 
   const navItems = [{id:"dashboard",label:"Dashboard",icon:"📊"},{id:"reservas",label:"Reservas",icon:"📅"},{id:"despesas",label:"Despesas",icon:"🧾"},{id:"aptos",label:"Aptos",icon:"🏠"},{id:"proprietarios",label:"Proprietários",icon:"👤"},{id:"repasse",label:"Repasse",icon:"💰"}];
@@ -554,13 +455,12 @@ function App() {
     mesHeader:{fontSize:13,fontWeight:800,color:"#38bdf8",margin:"16px 0 8px",textTransform:"uppercase",letterSpacing:0.5,display:"flex",alignItems:"center",gap:8},
   };
 
-  const liquidoPreview = parseValor(form.valorBruto) - parseValor(form.comissaoPlat) - parseValor(form.comissaoAdm) - parseValor(form.limpeza) - parseValor(form.outrasDespesas);
+  const liquidoPreview = Number(form.valorBruto||0) - Number(form.comissaoPlat||0) - Number(form.comissaoAdm||0) - Number(form.limpeza||0) - Number(form.outrasDespesas||0);
 
   const isModalDespesa = typeof modalComprovantes === "string" && modalComprovantes.startsWith("despesa:");
   const modalDespesaId = isModalDespesa ? Number(modalComprovantes.split(":")[1]) : null;
-  const reservaComprovantes = (modalComprovantes && !isModalDespesa) ? reservasCalc.find(r => r.id === modalComprovantes || r.id == modalComprovantes) : null;
-  // eslint-disable-next-line eqeqeq
-  const despesaComprovantes = isModalDespesa ? despesas.find(d => d.id == modalDespesaId) : null;
+  const reservaComprovantes = (modalComprovantes && !isModalDespesa) ? reservasCalc.find(r => r.id === modalComprovantes) : null;
+  const despesaComprovantes = isModalDespesa ? despesas.find(d => d.id === modalDespesaId) : null;
   const itemComprovantes = reservaComprovantes || despesaComprovantes;
 
   return (
@@ -606,28 +506,6 @@ function App() {
               <div style={{flex:1}}><div style={{fontSize:10,color:"#64748b"}}>✓ Efetivadas</div><div style={{fontSize:18,fontWeight:800,color:"#34d399"}}>{totais.efetivadas}</div></div>
               <div style={{flex:1}}><div style={{fontSize:10,color:"#64748b"}}>⏳ Pendentes</div><div style={{fontSize:18,fontWeight:800,color:"#fb923c"}}>{totais.pendentes}</div></div>
             </div>
-
-            {visaoDash==="mensal" && ocupacaoDash && (
-              <div style={c.card}>
-                <div style={{fontSize:12,fontWeight:700,color:"#94a3b8",marginBottom:12}}>📆 Ocupação — {MESES[mesDash]}</div>
-                {ocupacaoDash.map((a,i) => (
-                  <div key={i} style={{marginBottom:i<ocupacaoDash.length-1?14:0}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                      <span style={{fontSize:13,fontWeight:700,color:"#f1f5f9"}}>{a.nome}</span>
-                      <span style={{fontSize:13,fontWeight:800,color:"#38bdf8"}}>{a.taxa}%</span>
-                    </div>
-                    <div style={{background:"#0f172a",borderRadius:6,height:12,overflow:"hidden",marginBottom:6}}>
-                      <div style={{width:`${a.taxa}%`,background:`linear-gradient(90deg,#10b981,#38bdf8)`,height:"100%",borderRadius:6,transition:"width 0.4s"}}/>
-                    </div>
-                    <div style={{display:"flex",gap:16}}>
-                      <span style={{fontSize:11,color:"#64748b"}}>🟢 <span style={{color:"#34d399",fontWeight:700}}>{a.ocupados}</span> dias ocupados</span>
-                      <span style={{fontSize:11,color:"#64748b"}}>⬜ <span style={{color:"#94a3b8",fontWeight:700}}>{a.vagos}</span> dias vagos</span>
-                      <span style={{fontSize:11,color:"#64748b"}}>{a.diasNoMes} dias no mês</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {visaoDash==="anual" && (
               <div style={c.card}>
@@ -709,7 +587,7 @@ function App() {
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
                       <div>
                         <div style={{fontSize:14,fontWeight:800,color:"#f1f5f9"}}>{r.hospede}</div>
-                        <div style={{fontSize:11,color:"#64748b"}}>{nomeApto(r.aptoId)} · {formatPeriodo(r)} · {r.diarias} diária{r.diarias>1?"s":""}</div>
+                        <div style={{fontSize:11,color:"#64748b"}}>{nomeApto(r.aptoId)} · {r.periodo} · {r.diarias} diária{r.diarias>1?"s":""}</div>
                       </div>
                       <PlatBadge plat={r.plataforma}/>
                     </div>
@@ -885,7 +763,6 @@ function App() {
                     const desp=ar.reduce((s,r)=>s+r.totalDespesas,0);
                     const despGerais=despAptoMes.reduce((s,d)=>s+Number(d.valor||0),0);
                     const liq=bruto-desp-despGerais;
-                    const oc = mesRepasse !== "todos" ? calcOcupacao(ar, parseInt(mesRepasse), 2026) : null;
                     return (
                       <div key={j} style={{padding:"10px",background:"#0f172a",borderRadius:8,marginBottom:6}}>
                         <div style={{...c.row,marginBottom:4}}>
@@ -896,23 +773,8 @@ function App() {
                           <span style={{fontSize:11,color:"#64748b"}}>Repasse Líquido: <span style={{color:"#34d399",fontWeight:700}}>{R(liq)}</span></span>
                           {despGerais > 0 && <span style={{fontSize:11,color:"#64748b"}}>Despesas gerais: <span style={{color:"#f87171",fontWeight:700}}>{R(despGerais)}</span></span>}
                         </div>
-                        {oc && (
-                          <div style={{background:"#1e293b",borderRadius:6,padding:"8px 10px",marginBottom:8}}>
-                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                              <span style={{fontSize:10,color:"#64748b"}}>📆 Ocupação {MESES[parseInt(mesRepasse)]}</span>
-                              <span style={{fontSize:11,fontWeight:700,color:"#38bdf8"}}>{oc.taxa}%</span>
-                            </div>
-                            <div style={{background:"#0f172a",borderRadius:4,height:8,overflow:"hidden",marginBottom:4}}>
-                              <div style={{width:`${oc.taxa}%`,background:"linear-gradient(90deg,#10b981,#38bdf8)",height:"100%",borderRadius:4}}/>
-                            </div>
-                            <div style={{display:"flex",gap:12}}>
-                              <span style={{fontSize:10,color:"#34d399"}}>🟢 {oc.ocupados} dias ocupados</span>
-                              <span style={{fontSize:10,color:"#94a3b8"}}>⬜ {oc.vagos} dias vagos</span>
-                            </div>
-                          </div>
-                        )}
                         {mesRepasse !== "todos" && ar.length > 0 && (
-                          <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>gerarRelatorioPDF(p, a, parseInt(mesRepasse), ar, despAptoMes, calcOcupacao(ar, parseInt(mesRepasse), 2026))}>
+                          <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>gerarRelatorioPDF(p, a, parseInt(mesRepasse), ar, despAptoMes)}>
                             📄 Gerar Relatório PDF — {MESES[parseInt(mesRepasse)]}
                           </button>
                         )}
@@ -946,17 +808,10 @@ function App() {
             <div style={c.formRow}><label style={c.label}>Plataforma</label><select style={c.select} value={form.plataforma} onChange={e=>setForm({...form,plataforma:e.target.value})}>{PLATAFORMAS.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
             <div style={c.formRow}><label style={c.label}>Nome do Hóspede *</label><input style={c.input} value={form.hospede} onChange={e=>setForm({...form,hospede:e.target.value})} placeholder="Ex: João Silva"/></div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Check-in *</label><input style={c.input} type="date" value={form.checkin} onChange={e=>{const ci=e.target.value; const co=form.checkout; let dias=form.diarias; let mes=form.mes; if(ci&&co){const d=Math.round((new Date(co+"T00:00:00")-new Date(ci+"T00:00:00"))/(1000*60*60*24)); if(d>0){dias=d; mes=new Date(ci+"T00:00:00").getMonth();}} setForm({...form,checkin:ci,diarias:dias,mes:mes});}}/></div>
-              <div style={c.formRow}><label style={c.label}>Check-out *</label><input style={c.input} type="date" value={form.checkout} onChange={e=>{const co=e.target.value; const ci=form.checkin; let dias=form.diarias; let mes=form.mes; if(ci&&co){const d=Math.round((new Date(co+"T00:00:00")-new Date(ci+"T00:00:00"))/(1000*60*60*24)); if(d>0){dias=d; mes=new Date(ci+"T00:00:00").getMonth();}} setForm({...form,checkout:co,diarias:dias,mes:mes});}}/></div>
-            </div>
-            {form.checkin && form.checkout && parseValor(form.valorBruto)===0 && (
-              <div style={{fontSize:11,color:"#38bdf8",marginBottom:8,marginTop:-8}}>
-                📅 {Math.max(0,Math.round((new Date(form.checkout+"T00:00:00")-new Date(form.checkin+"T00:00:00"))/(1000*60*60*24)))} diária(s) · {form.checkin && MESES[new Date(form.checkin+"T00:00:00").getMonth()]}
-              </div>
-            )}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Nº Diárias</label><input style={c.input} type="number" inputMode="numeric" value={form.diarias} onChange={e=>setForm({...form,diarias:parseInt(e.target.value)||1})}/></div>
-              <div style={c.formRow}><label style={c.label}>Valor Bruto (R$)</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.valorBruto} onChange={e=>setForm({...form,valorBruto:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Período</label><input style={c.input} value={form.periodo} onChange={e=>setForm({...form,periodo:e.target.value})} placeholder="10 a 13/Jul"/></div>
+              <div style={c.formRow}><label style={c.label}>Mês</label><select style={c.select} value={form.mes} onChange={e=>setForm({...form,mes:parseInt(e.target.value)})}>{MESES.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
+              <div style={c.formRow}><label style={c.label}>Nº Diárias</label><input style={c.input} type="number" value={form.diarias} onChange={e=>setForm({...form,diarias:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Valor Bruto (R$)</label><input style={c.input} type="number" value={form.valorBruto} onChange={e=>setForm({...form,valorBruto:Number(e.target.value)})}/></div>
             </div>
             <div style={c.formRow}>
               <label style={c.label}>Status da Reserva</label>
@@ -967,14 +822,14 @@ function App() {
             </div>
             <div style={{fontSize:11,color:"#64748b",fontWeight:700,textTransform:"uppercase",margin:"4px 0 8px"}}>Despesas</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Comissão Plataforma</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.comissaoPlat} onChange={e=>setForm({...form,comissaoPlat:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
-              <div style={c.formRow}><label style={c.label}>Comissão ADM</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.comissaoAdm} onChange={e=>setForm({...form,comissaoAdm:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
-              <div style={c.formRow}><label style={c.label}>Limpeza</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.limpeza} onChange={e=>setForm({...form,limpeza:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
-              <div style={c.formRow}><label style={c.label}>Outras Despesas</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={form.outrasDespesas} onChange={e=>setForm({...form,outrasDespesas:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Comissão Plataforma</label><input style={c.input} type="number" value={form.comissaoPlat} onChange={e=>setForm({...form,comissaoPlat:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Comissão ADM</label><input style={c.input} type="number" value={form.comissaoAdm} onChange={e=>setForm({...form,comissaoAdm:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Limpeza</label><input style={c.input} type="number" value={form.limpeza} onChange={e=>setForm({...form,limpeza:Number(e.target.value)})}/></div>
+              <div style={c.formRow}><label style={c.label}>Outras Despesas</label><input style={c.input} type="number" value={form.outrasDespesas} onChange={e=>setForm({...form,outrasDespesas:Number(e.target.value)})}/></div>
             </div>
-            {parseValor(form.valorBruto)>0 && (
+            {form.valorBruto>0 && (
               <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",marginBottom:12,display:"flex",gap:16}}>
-                <div><span style={{fontSize:11,color:"#64748b"}}>Despesas: </span><span style={{fontWeight:700,color:"#f87171"}}>{R(parseValor(form.comissaoPlat)+parseValor(form.comissaoAdm)+parseValor(form.limpeza)+parseValor(form.outrasDespesas))}</span></div>
+                <div><span style={{fontSize:11,color:"#64748b"}}>Despesas: </span><span style={{fontWeight:700,color:"#f87171"}}>{R(Number(form.comissaoPlat)+Number(form.comissaoAdm)+Number(form.limpeza)+Number(form.outrasDespesas))}</span></div>
                 <div><span style={{fontSize:11,color:"#64748b"}}>Líquido: </span><span style={{fontWeight:700,color:"#34d399"}}>{R(liquidoPreview)}</span></div>
               </div>
             )}
@@ -992,7 +847,7 @@ function App() {
           <div style={c.modal}>
             <div style={c.modalHandle}/>
             <div style={c.modalTitle}>📎 Comprovantes — {isModalDespesa ? itemComprovantes.descricao : itemComprovantes.hospede}</div>
-            <div style={{fontSize:12,color:"#64748b",marginBottom:14}}>{nomeApto(itemComprovantes.aptoId)} {isModalDespesa ? `· ${itemComprovantes.categoria} · ${R(itemComprovantes.valor)}` : `· ${formatPeriodo(itemComprovantes)}`}</div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:14}}>{nomeApto(itemComprovantes.aptoId)} {isModalDespesa ? `· ${itemComprovantes.categoria} · ${R(itemComprovantes.valor)}` : `· ${itemComprovantes.periodo}`}</div>
 
             <div style={{display:"flex",gap:10,marginBottom:16}}>
               <button style={{...c.btn(),flex:1,justifyContent:"center"}} onClick={()=>cameraInputRef.current?.click()}>📷 Tirar Foto</button>
@@ -1039,7 +894,7 @@ function App() {
             <div style={c.formRow}><label style={c.label}>Categoria</label><select style={c.select} value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>{CATEGORIAS_DESPESA.map(cat=><option key={cat} value={cat}>{cat}</option>)}</select></div>
             <div style={c.formRow}><label style={c.label}>Descrição *</label><input style={c.input} value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Diarista - Lorena"/></div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="text" inputMode="decimal" placeholder="0,00" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:e.target.value.replace(/[^0-9,\.]/g,"")})}/></div>
+              <div style={c.formRow}><label style={c.label}>Valor (R$) *</label><input style={c.input} type="number" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:Number(e.target.value)})}/></div>
               <div style={c.formRow}><label style={c.label}>Mês</label><select style={c.select} value={formDespesa.mes} onChange={e=>setFormDespesa({...formDespesa,mes:parseInt(e.target.value)})}>{MESES.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></div>
             </div>
             <div style={c.formRow}><label style={c.label}>Data (opcional)</label><input style={c.input} type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/></div>
