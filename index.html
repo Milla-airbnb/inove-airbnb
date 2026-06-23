@@ -572,8 +572,10 @@ function App() {
   const reservasPorMes = useMemo(() => {
     const grupos = {};
     reservasFiltradas.forEach(r => {
-      if (!grupos[r.mes]) grupos[r.mes] = [];
-      grupos[r.mes].push(r);
+      // Usa o mês real do check-in se disponível, senão usa o campo mes
+      const mesReal = r.checkin ? new Date(r.checkin + "T00:00:00").getMonth() : r.mes;
+      if (!grupos[mesReal]) grupos[mesReal] = [];
+      grupos[mesReal].push(r);
     });
     return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(mes => ({
       mes,
