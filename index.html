@@ -391,33 +391,40 @@ function App() {
   const [carregando, setCarregando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
 
-  // Carrega dados do Supabase ao iniciar
-  useEffect(() => {
-    const carregar = async () => {
-      setCarregando(true);
-      try {
-        const [aptosDb, propsDb, reservasDb, despesasDb] = await Promise.all([
-          sbFetch("aptos?order=nome"),
-          sbFetch("proprietarios?order=nome"),
-          sbFetch("reservas?order=id"),
-          sbFetch("despesas?order=id"),
+  // Carrega dados do Supabase — função reutilizável
+  const carregarDaNuvem = async (mostrarLoading = false) => {
+    if (mostrarLoading) setCarregando(true);
+    else setSincronizando(true);
+    try {
+      const [aptosDb, propsDb, reservasDb, despesasDb] = await Promise.all([
+        sbFetch("aptos?order=nome"),
+        sbFetch("proprietarios?order=nome"),
+        sbFetch("reservas?order=id"),
+        sbFetch("despesas?order=id"),
+      ]);
+      if (aptosDb && aptosDb.length > 0) setAptos(aptosDb.map(aptoDoBanco));
+      if (propsDb && propsDb.length > 0) setProprietarios(propsDb.map(propDoBanco));
+      if (reservasDb && reservasDb.length > 0) setReservas(reservasDb.map(reservaDoBanco));
+      else if (reservasDb && reservasDb.length === 0) {
+        await Promise.all([
+          ...APTOS_INICIAIS.map(a => sbFetch("aptos", "POST", aptoParaBanco(a))),
+          ...PROPRIETARIOS_INICIAIS.map(p => sbFetch("proprietarios", "POST", propParaBanco(p))),
+          ...RESERVAS_INICIAIS.map(r => sbFetch("reservas", "POST", reservaParaBanco(r))),
         ]);
-        if (aptosDb && aptosDb.length > 0) setAptos(aptosDb.map(aptoDoBanco));
-        if (propsDb && propsDb.length > 0) setProprietarios(propsDb.map(propDoBanco));
-        if (reservasDb && reservasDb.length > 0) setReservas(reservasDb.map(reservaDoBanco));
-        else if (reservasDb && reservasDb.length === 0) {
-          // Primeira vez — sobe os dados iniciais
-          await Promise.all([
-            ...APTOS_INICIAIS.map(a => sbFetch("aptos", "POST", aptoParaBanco(a))),
-            ...PROPRIETARIOS_INICIAIS.map(p => sbFetch("proprietarios", "POST", propParaBanco(p))),
-            ...RESERVAS_INICIAIS.map(r => sbFetch("reservas", "POST", reservaParaBanco(r))),
-          ]);
-        }
-        if (despesasDb && despesasDb.length > 0) setDespesas(despesasDb.map(despesaDoBanco));
-      } catch(e) { console.error("Erro ao carregar:", e); }
-      setCarregando(false);
-    };
-    carregar();
+      }
+      if (despesasDb && despesasDb.length > 0) setDespesas(despesasDb.map(despesaDoBanco));
+    } catch(e) { console.error("Erro ao carregar:", e); }
+    if (mostrarLoading) setCarregando(false);
+    else setSincronizando(false);
+  };
+
+  // Carrega ao iniciar
+  useEffect(() => { carregarDaNuvem(true); }, []);
+
+  // Atualiza automaticamente a cada 60 segundos
+  useEffect(() => {
+    const intervalo = setInterval(() => carregarDaNuvem(false), 60000);
+    return () => clearInterval(intervalo);
   }, []);
 
   // Migra dados do localStorage (versão antiga) para o Supabase
@@ -435,16 +442,7 @@ function App() {
       if (despesasLocal.length > 0) await Promise.all(despesasLocal.map(d => sbFetch("despesas", "POST", despesaParaBanco(d))));
 
       // Recarrega tudo do Supabase após migração
-      const [aptosDb, propsDb, reservasDb, despesasDb] = await Promise.all([
-        sbFetch("aptos?order=nome"),
-        sbFetch("proprietarios?order=nome"),
-        sbFetch("reservas?order=id"),
-        sbFetch("despesas?order=id"),
-      ]);
-      if (aptosDb?.length > 0) setAptos(aptosDb.map(aptoDoBanco));
-      if (propsDb?.length > 0) setProprietarios(propsDb.map(propDoBanco));
-      if (reservasDb?.length > 0) setReservas(reservasDb.map(reservaDoBanco));
-      if (despesasDb?.length > 0) setDespesas(despesasDb.map(despesaDoBanco));
+      await carregarDaNuvem(false);
 
       alert(`✅ Migração concluída!\n${reservasLocal.length} reservas, ${aptosLocal.length} aptos, ${despesasLocal.length} despesas enviados para a nuvem.`);
     } catch(e) {
@@ -769,6 +767,11 @@ function App() {
           <div style={c.topSub}>
             {carregando ? "⏳ Carregando..." : sincronizando ? "🔄 Sincronizando..." : "☁️ Sincronizado"}
           </div>
+          {!carregando && (
+            <button onClick={()=>carregarDaNuvem(false)} style={{background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:18,padding:"0 4px"}} title="Atualizar dados">
+              🔃
+            </button>
+          )}
         </div>
         <select style={{...c.filtroSel,width:"auto",fontSize:12}} value={aptoFiltro} onChange={e=>setAptoFiltro(e.target.value)}>
           <option value="todos">Todos os aptos</option>
