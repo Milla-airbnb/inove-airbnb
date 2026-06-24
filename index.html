@@ -55,6 +55,18 @@ async function sbUpsert(tabela, dados) {
   });
 }
 
+async function sbPatch(tabela, id, dados) {
+  await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, {
+    method: "PATCH",
+    headers: {
+      apikey: SB_KEY,
+      Authorization: `Bearer ${SB_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(dados)
+  });
+}
+
 async function sbDelete(tabela, id) {
   await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, {
     method: "DELETE",
@@ -514,7 +526,7 @@ function App() {
       if (idx >= files.length) {
         // Salva tudo no Supabase
         setSalvando(true);
-        await sbUpsert(tabela, {id, comprovantes: compsAtuais});
+        await sbPatch(tabela, id, {comprovantes: compsAtuais});
         setSalvando(false);
         // Atualiza estado local
         if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:compsAtuais} : r));
@@ -549,7 +561,7 @@ function App() {
       : (despesas.find(d=>d.id==id)?.comprovantes||[]);
     const novos = atuais.filter((_,i)=>i!==idx);
     setSalvando(true);
-    await sbUpsert(tabela, {id, comprovantes: novos});
+    await sbPatch(tabela, id, {comprovantes: novos});
     setSalvando(false);
     if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:novos} : r));
     else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:novos} : d));
