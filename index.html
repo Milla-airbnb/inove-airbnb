@@ -415,7 +415,7 @@ function App() {
     const diarias = diffDias(fRes.checkin,fRes.checkout);
     const mes = fRes.checkin ? new Date(fRes.checkin+"T00:00:00").getMonth() : new Date().getMonth();
     const id = editId || Date.now();
-    const reg = { id, apto_id:fRes.aptoId, hospede:fRes.hospede, plataforma:fRes.plataforma, checkin:fRes.checkin||null, checkout:fRes.checkout||null, mes, diarias, valor_bruto:pv(fRes.valorBruto), comissao_plat:pv(fRes.comissaoPlat), comissao_adm:pv(fRes.comissaoAdm), efetivada:fRes.efetivada };
+    const reg = { id, apto_id:fRes.aptoId, hospede:fRes.hospede, plataforma:fRes.plataforma, checkin:fRes.checkin||null, checkout:fRes.checkout||null, mes, diarias, valor_bruto:parseFloat(pv(fRes.valorBruto).toFixed(2)), comissao_plat:parseFloat(pv(fRes.comissaoPlat).toFixed(2)), comissao_adm:parseFloat(pv(fRes.comissaoAdm).toFixed(2)), efetivada:fRes.efetivada };
     setSalvando(true);
     await sbUpsert("reservas", reg);
     setSalvando(false);
@@ -490,16 +490,19 @@ function App() {
   const uploadComp = (e) => {
     if (!modalComp) return;
     const {tipo, id} = modalComp;
+    const tipoLS = tipo==="reserva" ? "reserva" : "despesa";
     const files = Array.from(e.target.files||[]);
     files.forEach(f=>{
       const rd = new FileReader();
       rd.onload = ev => {
         const novo = {nome:f.name, tipo:f.type, dataUrl:ev.target.result, data:new Date().toISOString()};
-        const atuais = getComps(tipo,id);
+        const atuais = getComps(tipoLS, id);
         const novos = [...atuais, novo];
-        setComps(tipo,id,novos);
+        setComps(tipoLS, id, novos);
         if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:novos} : r));
         else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:novos} : d));
+        // Força re-render do modal
+        setModalComp(prev=>prev ? {...prev} : null);
       };
       rd.readAsDataURL(f);
     });
@@ -508,12 +511,16 @@ function App() {
   const removerComp = (idx) => {
     if (!modalComp) return;
     const {tipo,id} = modalComp;
-    const novos = getComps(tipo,id).filter((_,i)=>i!==idx);
-    setComps(tipo,id,novos);
+    const tipoLS = tipo==="reserva" ? "reserva" : "despesa";
+    const novos = getComps(tipoLS, id).filter((_,i)=>i!==idx);
+    setComps(tipoLS, id, novos);
     if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:novos} : r));
     else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:novos} : d));
+    setModalComp(prev=>prev ? {...prev} : null);
   };
   const itemComp = modalComp ? (modalComp.tipo==="reserva" ? reservas.find(r=>r.id==modalComp.id) : despesas.find(d=>d.id==modalComp.id)) : null;
+  // Comprovantes sempre do localStorage para garantir que aparecem
+  const compsAtivos = modalComp ? getComps(modalComp.tipo==="reserva"?"reserva":"despesa", modalComp.id) : [];
 
   // ─── ESTILOS ───
   const c = {
@@ -855,7 +862,7 @@ function App() {
       </div>}
 
       {/* ══ MODAL COMPROVANTES ══ */}
-      {modalComp && itemComp && <div style={c.overlay} onClick={e=>e.target===e.currentTarget&&setModalComp(null)}>
+      {modalComp && <div style={c.overlay} onClick={e=>e.target===e.currentTarget&&setModalComp(null)}>
         <div style={c.modal}>
           <div style={c.mhandle}/>
           <div style={c.mtitle}>📎 Comprovantes — {modalComp.nome}</div>
@@ -865,8 +872,8 @@ function App() {
           </div>
           <input ref={camRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={uploadComp}/>
           <input ref={fileRef} type="file" accept="image/*,application/pdf" multiple style={{display:"none"}} onChange={uploadComp}/>
-          {(itemComp.comprovantes||[]).length===0 && <div style={{color:"#475569",textAlign:"center",padding:20,fontSize:13}}>Nenhum comprovante ainda.</div>}
-          {(itemComp.comprovantes||[]).map((comp,idx)=><div key={idx} style={{background:"#0f172a",borderRadius:8,padding:10,display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
+          {compsAtivos.length===0 && <div style={{color:"#475569",textAlign:"center",padding:20,fontSize:13}}>Nenhum comprovante ainda.</div>}
+          {compsAtivos.map((comp,idx)=><div key={idx} style={{background:"#0f172a",borderRadius:8,padding:10,display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
             {comp.tipo?.startsWith("image") ? <img src={comp.dataUrl} alt={comp.nome} style={{width:48,height:48,borderRadius:6,objectFit:"cover"}}/> : <div style={{width:48,height:48,borderRadius:6,background:"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>📄</div>}
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:12,fontWeight:700,color:"#f1f5f9",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{comp.nome}</div>
