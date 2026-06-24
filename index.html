@@ -94,27 +94,24 @@ function calcOcupacao(reservas, mes, ano) {
 }
 
 // Comprovantes ficam locais
-const getComps = (tipo,id) => {
-  try {
-    // Tenta a chave com o id exato
-    const chave1 = `cbm_comp_${tipo}_${id}`;
-    const v1 = localStorage.getItem(chave1);
-    if (v1) return JSON.parse(v1);
-    // Tenta variações (string vs número)
-    const chave2 = `cbm_comp_${tipo}_${String(id)}`;
-    const v2 = localStorage.getItem(chave2);
-    if (v2) return JSON.parse(v2);
-    return [];
-  } catch { return []; }
-};
-const setComps = (tipo,id,v) => {
-  try {
-    // Salva sempre com String(id) para consistência
-    localStorage.setItem(`cbm_comp_${tipo}_${String(id)}`, JSON.stringify(v));
-    // Remove chave antiga se existir com formato diferente
-    localStorage.setItem(`cbm_comp_${tipo}_${id}`, JSON.stringify(v));
-  } catch {}
-};
+// Comprime imagem antes de salvar (máx 800px, qualidade 0.6)
+async function comprimirImagem(dataUrl, tipo) {
+  if (!tipo || !tipo.startsWith("image")) return dataUrl;
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 800;
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.6));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
 
 // ─────────────────────────────────────────────
 // GERADOR DE PDF
@@ -161,18 +158,10 @@ function gerarPDF(prop, apto, mes, reservas, despesas) {
       <td style="text-align:right">${R(d.valor)}</td>
     </tr>`).join("");
 
-  // Comprovantes
+  // Comprovantes — vêm direto do Supabase
   const comps = [];
-  // Debug: mostra todas as chaves de comprovantes no localStorage
-  const todasChaves = [];
-  for (let i=0; i<localStorage.length; i++) { const k=localStorage.key(i); if(k&&k.startsWith('cbm_comp_')) todasChaves.push(k); }
-  console.log('Chaves de comprovantes no localStorage:', todasChaves);
-  console.log('IDs das reservas no relatório:', reservas.map(r=>r.id));
-  console.log('IDs das despesas no relatório:', despesas.map(d=>d.id));
   reservas.forEach(r => {
-    const cs = getComps("reserva", r.id);
-    console.log('Reserva', r.id, r.hospede, '→', cs.length, 'comprovantes');
-    cs.forEach((c,i)=>{
+    (r.comprovantes||[]).forEach((c,i)=>{
       comps.push(`<div style="margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px">
         <div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:6px">${r.hospede} (${r.plataforma}) — ${c.nome||`Comprovante ${i+1}`}</div>
         ${c.tipo?.startsWith("image") ? `<img src="${c.dataUrl}" style="max-width:280px;border-radius:6px;border:1px solid #cbd5e1"/>` : `<div style="font-size:11px;padding:8px;background:#fff;border-radius:4px">📄 ${c.nome}</div>`}
@@ -180,7 +169,7 @@ function gerarPDF(prop, apto, mes, reservas, despesas) {
     });
   });
   despesas.forEach(d => {
-    getComps("despesa", d.id).forEach((c,i)=>{
+    (d.comprovantes||[]).forEach((c,i)=>{
       comps.push(`<div style="margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px">
         <div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:6px">${d.categoria} — ${d.descricao} (${R(d.valor)}) — ${c.nome||`Comprovante ${i+1}`}</div>
         ${c.tipo?.startsWith("image") ? `<img src="${c.dataUrl}" style="max-width:280px;border-radius:6px;border:1px solid #cbd5e1"/>` : `<div style="font-size:11px;padding:8px;background:#fff;border-radius:4px">📄 ${c.nome}</div>`}
@@ -330,8 +319,8 @@ function App() {
       const [a,p,r,d] = await Promise.all([sbGet("aptos"),sbGet("proprietarios"),sbGet("reservas"),sbGet("despesas")]);
       setAptos(a||[]);
       setProps(p||[]);
-      setReservas((r||[]).map(x=>({...x, comprovantes: getComps("reserva",x.id)})));
-      setDespesas((d||[]).map(x=>({...x, comprovantes: getComps("despesa",x.id)})));
+      setReservas((r||[]).map(x=>({...x, comprovantes: x.comprovantes||[]})));
+      setDespesas((d||[]).map(x=>({...x, comprovantes: x.comprovantes||[]})));
     } catch(e) { console.error(e); }
     setLoading(false);
   };
@@ -448,7 +437,7 @@ function App() {
     setSalvando(false);
     setReservas(prev => {
       const sem = prev.filter(r=>r.id!=id);
-      return [...sem, {...reg, comprovantes: getComps("reserva",id)}];
+      const compAntigos = prev.find(r=>r.id==id)?.comprovantes||[]; return [...sem, {...reg, comprovantes: compAntigos}];
     });
     setModalRes(false); setEditId(null); setFRes(resVazio);
   };
@@ -463,7 +452,7 @@ function App() {
     setSalvando(false);
     setDespesas(prev => {
       const sem = prev.filter(d=>d.id!=id);
-      return [...sem, {...reg, comprovantes: getComps("despesa",id)}];
+      const compAntigos = prev.find(d=>d.id==id)?.comprovantes||[]; return [...sem, {...reg, comprovantes: compAntigos}];
     });
     setModalDep(false); setEditId(null); setFDep(depVazio);
   };
@@ -514,48 +503,61 @@ function App() {
   };
 
   // ── COMPROVANTES ──
+  // Salva comprovante no Supabase (comprimido)
   const uploadComp = (e) => {
     if (!modalComp) return;
     const {tipo, id} = modalComp;
-    const tipoLS = tipo==="reserva" ? "reserva" : "despesa";
+    const tabela = tipo==="reserva" ? "reservas" : "despesas";
     const files = Array.from(e.target.files||[]);
-    // Processa arquivos em sequência para não sobrescrever
-    const processarProximo = (idx) => {
+
+    const processarProximo = async (idx, compsAtuais) => {
       if (idx >= files.length) {
-        // Atualiza estado com tudo que foi salvo
-        const todos = getComps(tipoLS, id);
-        if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:todos} : r));
-        else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:todos} : d));
-        setModalComp(prev=>prev ? {...prev} : null);
+        // Salva tudo no Supabase
+        setSalvando(true);
+        await sbUpsert(tabela, {id, comprovantes: compsAtuais});
+        setSalvando(false);
+        // Atualiza estado local
+        if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:compsAtuais} : r));
+        else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:compsAtuais} : d));
+        setModalComp(prev=>prev ? {...prev, _t:Date.now()} : null);
         return;
       }
       const f = files[idx];
       const rd = new FileReader();
-      rd.onload = ev => {
-        const novo = {nome:f.name, tipo:f.type, dataUrl:ev.target.result, data:new Date().toISOString()};
-        // Lê os atuais AGORA (depois do anterior ter salvo)
-        const atuais = getComps(tipoLS, id);
-        setComps(tipoLS, id, [...atuais, novo]);
-        processarProximo(idx + 1);
+      rd.onload = async ev => {
+        const dataUrl = await comprimirImagem(ev.target.result, f.type);
+        const novo = {nome:f.name, tipo:f.type, dataUrl, data:new Date().toISOString()};
+        processarProximo(idx + 1, [...compsAtuais, novo]);
       };
       rd.readAsDataURL(f);
     };
-    processarProximo(0);
+
+    // Pega comprovantes atuais do estado
+    const atuais = tipo==="reserva"
+      ? (reservas.find(r=>r.id==id)?.comprovantes||[])
+      : (despesas.find(d=>d.id==id)?.comprovantes||[]);
+    processarProximo(0, atuais);
     e.target.value="";
   };
-  const removerComp = (idx) => {
+
+  const removerComp = async (idx) => {
     if (!modalComp) return;
-    const {tipo,id} = modalComp;
-    const tipoLS = tipo==="reserva" ? "reserva" : "despesa";
-    const novos = getComps(tipoLS, id).filter((_,i)=>i!==idx);
-    setComps(tipoLS, id, novos);
+    const {tipo, id} = modalComp;
+    const tabela = tipo==="reserva" ? "reservas" : "despesas";
+    const atuais = tipo==="reserva"
+      ? (reservas.find(r=>r.id==id)?.comprovantes||[])
+      : (despesas.find(d=>d.id==id)?.comprovantes||[]);
+    const novos = atuais.filter((_,i)=>i!==idx);
+    setSalvando(true);
+    await sbUpsert(tabela, {id, comprovantes: novos});
+    setSalvando(false);
     if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:novos} : r));
     else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:novos} : d));
-    setModalComp(prev=>prev ? {...prev} : null);
+    setModalComp(prev=>prev ? {...prev, _t:Date.now()} : null);
   };
+
   const itemComp = modalComp ? (modalComp.tipo==="reserva" ? reservas.find(r=>r.id==modalComp.id) : despesas.find(d=>d.id==modalComp.id)) : null;
-  // Comprovantes sempre do localStorage para garantir que aparecem
-  const compsAtivos = modalComp ? getComps(modalComp.tipo==="reserva"?"reserva":"despesa", modalComp.id) : [];
+  const compsAtivos = itemComp?.comprovantes || [];
 
   // ─── ESTILOS ───
   const c = {
