@@ -94,8 +94,27 @@ function calcOcupacao(reservas, mes, ano) {
 }
 
 // Comprovantes ficam locais
-const getComps = (tipo,id) => { try { return JSON.parse(localStorage.getItem(`cbm_comp_${tipo}_${id}`)||"[]"); } catch { return []; } };
-const setComps = (tipo,id,v) => { try { localStorage.setItem(`cbm_comp_${tipo}_${id}`, JSON.stringify(v)); } catch {} };
+const getComps = (tipo,id) => {
+  try {
+    // Tenta a chave com o id exato
+    const chave1 = `cbm_comp_${tipo}_${id}`;
+    const v1 = localStorage.getItem(chave1);
+    if (v1) return JSON.parse(v1);
+    // Tenta variações (string vs número)
+    const chave2 = `cbm_comp_${tipo}_${String(id)}`;
+    const v2 = localStorage.getItem(chave2);
+    if (v2) return JSON.parse(v2);
+    return [];
+  } catch { return []; }
+};
+const setComps = (tipo,id,v) => {
+  try {
+    // Salva sempre com String(id) para consistência
+    localStorage.setItem(`cbm_comp_${tipo}_${String(id)}`, JSON.stringify(v));
+    // Remove chave antiga se existir com formato diferente
+    localStorage.setItem(`cbm_comp_${tipo}_${id}`, JSON.stringify(v));
+  } catch {}
+};
 
 // ─────────────────────────────────────────────
 // GERADOR DE PDF
@@ -144,8 +163,16 @@ function gerarPDF(prop, apto, mes, reservas, despesas) {
 
   // Comprovantes
   const comps = [];
+  // Debug: mostra todas as chaves de comprovantes no localStorage
+  const todasChaves = [];
+  for (let i=0; i<localStorage.length; i++) { const k=localStorage.key(i); if(k&&k.startsWith('cbm_comp_')) todasChaves.push(k); }
+  console.log('Chaves de comprovantes no localStorage:', todasChaves);
+  console.log('IDs das reservas no relatório:', reservas.map(r=>r.id));
+  console.log('IDs das despesas no relatório:', despesas.map(d=>d.id));
   reservas.forEach(r => {
-    getComps("reserva", r.id).forEach((c,i)=>{
+    const cs = getComps("reserva", r.id);
+    console.log('Reserva', r.id, r.hospede, '→', cs.length, 'comprovantes');
+    cs.forEach((c,i)=>{
       comps.push(`<div style="margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px">
         <div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:6px">${r.hospede} (${r.plataforma}) — ${c.nome||`Comprovante ${i+1}`}</div>
         ${c.tipo?.startsWith("image") ? `<img src="${c.dataUrl}" style="max-width:280px;border-radius:6px;border:1px solid #cbd5e1"/>` : `<div style="font-size:11px;padding:8px;background:#fff;border-radius:4px">📄 ${c.nome}</div>`}
@@ -492,20 +519,28 @@ function App() {
     const {tipo, id} = modalComp;
     const tipoLS = tipo==="reserva" ? "reserva" : "despesa";
     const files = Array.from(e.target.files||[]);
-    files.forEach(f=>{
+    // Processa arquivos em sequência para não sobrescrever
+    const processarProximo = (idx) => {
+      if (idx >= files.length) {
+        // Atualiza estado com tudo que foi salvo
+        const todos = getComps(tipoLS, id);
+        if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:todos} : r));
+        else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:todos} : d));
+        setModalComp(prev=>prev ? {...prev} : null);
+        return;
+      }
+      const f = files[idx];
       const rd = new FileReader();
       rd.onload = ev => {
         const novo = {nome:f.name, tipo:f.type, dataUrl:ev.target.result, data:new Date().toISOString()};
+        // Lê os atuais AGORA (depois do anterior ter salvo)
         const atuais = getComps(tipoLS, id);
-        const novos = [...atuais, novo];
-        setComps(tipoLS, id, novos);
-        if (tipo==="reserva") setReservas(prev=>prev.map(r=>r.id==id ? {...r,comprovantes:novos} : r));
-        else setDespesas(prev=>prev.map(d=>d.id==id ? {...d,comprovantes:novos} : d));
-        // Força re-render do modal
-        setModalComp(prev=>prev ? {...prev} : null);
+        setComps(tipoLS, id, [...atuais, novo]);
+        processarProximo(idx + 1);
       };
       rd.readAsDataURL(f);
-    });
+    };
+    processarProximo(0);
     e.target.value="";
   };
   const removerComp = (idx) => {
@@ -790,7 +825,12 @@ function App() {
                 <div style={{background:"#0f172a",borderRadius:4,height:7,overflow:"hidden",marginBottom:4}}><div style={{width:`${a.ocupacao.taxa}%`,background:"linear-gradient(90deg,#10b981,#38bdf8)",height:"100%",borderRadius:4}}/></div>
                 <div style={{display:"flex",gap:10}}><span style={{fontSize:10,color:"#34d399"}}>🟢 {a.ocupacao.ocupados} dias</span><span style={{fontSize:10,color:"#94a3b8"}}>⬜ {a.ocupacao.vagos} vagos</span></div>
               </div>}
-              {mesRepasse!=="todos" && a.reservas.length>0 && <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>gerarPDF(p,a,parseInt(mesRepasse),a.reservas,a.despesas)}>📄 Gerar Relatório PDF — {MESES[parseInt(mesRepasse)]}</button>}
+              {mesRepasse!=="todos" && a.reservas.length>0 && <button style={{...c.btnSm("#38bdf8"),width:"100%",color:"#0f172a"}} onClick={()=>{
+                // Busca TODAS as despesas do apto no mês, independente do apto_id exato
+                const mesN = parseInt(mesRepasse);
+                const todasDespMes = despesas.filter(d => d.mes==mesN && d.apto_id==a.id);
+                gerarPDF(p,a,mesN,a.reservas,todasDespMes);
+              }}>📄 Gerar Relatório PDF — {MESES[parseInt(mesRepasse)]}</button>}
             </div>)}
           </div>)}
           {dadosRepasse.length===0 && <div style={{...c.card,color:"#475569",textAlign:"center",padding:24}}>Cadastre proprietários para ver o relatório.</div>}
