@@ -551,8 +551,12 @@ function App() {
     let reservasP = reservasCalc.filter(r=>aptosP.some(a=>a.id==r.aptoId));
     let despesasP = despesas.filter(d=>aptosP.some(a=>a.id==d.aptoId));
     if (mesRepasse !== "todos") {
-      reservasP = reservasP.filter(r => r.mes == parseInt(mesRepasse));
-      despesasP = despesasP.filter(d => d.mes == parseInt(mesRepasse));
+      const mesNum = parseInt(mesRepasse);
+      reservasP = reservasP.filter(r => {
+        const mesR = r.checkin ? new Date(r.checkin+"T00:00:00").getMonth() : r.mes;
+        return mesR == mesNum;
+      });
+      despesasP = despesasP.filter(d => d.mes == mesNum);
     }
     const liquidoReservas = reservasP.reduce((a,r)=>a+r.liquido,0);
     const totalDespesasGerais = despesasP.reduce((a,d)=>a+Number(d.valor||0),0);
@@ -594,13 +598,20 @@ function App() {
     }
     const formParsed = { ...form, diarias, mes, valorBruto:parseValor(form.valorBruto), comissaoPlat:parseValor(form.comissaoPlat), comissaoAdm:parseValor(form.comissaoAdm) };
     let nova;
+    let reservaParaSalvar;
     if (editReserva!==null){
       const existente = reservas.find(x=>x.id===editReserva);
       const comprovantesAntigos = existente ? existente.comprovantes : [];
-      nova=reservas.map(r=>r.id===editReserva?{...formParsed,id:editReserva,comprovantes:comprovantesAntigos}:r);
+      reservaParaSalvar = {...formParsed, id:editReserva, comprovantes:comprovantesAntigos};
+      nova=reservas.map(r=>r.id===editReserva ? reservaParaSalvar : r);
     }
-    else{ nova=[...reservas,{...formParsed,id:Date.now()}]; }
-    saveReservas(nova);
+    else{
+      reservaParaSalvar = {...formParsed, id:Date.now()};
+      nova=[...reservas, reservaParaSalvar];
+    }
+    setReservas(nova);
+    setSincronizando(true);
+    sbFetch("reservas", "POST", reservaParaBanco(reservaParaSalvar)).finally(()=>setSincronizando(false));
     setModalReserva(false); setEditReserva(null); setForm(formVazio);
   };
   const abrirEditar = (r) => { setForm({aptoId:r.aptoId,hospede:r.hospede,plataforma:r.plataforma,checkin:r.checkin||"",checkout:r.checkout||"",mes:r.mes,diarias:r.diarias,valorBruto:String(r.valorBruto).replace(".",","),comissaoPlat:String(r.comissaoPlat).replace(".",","),comissaoAdm:String(r.comissaoAdm).replace(".",","),efetivada:r.efetivada,comprovantes:r.comprovantes||[]}); setEditReserva(r.id); setModalReserva(true); };
@@ -609,7 +620,14 @@ function App() {
     await sbFetch(`reservas?id=eq.${id}`, "DELETE");
     setReservas(prev => prev.filter(r => r.id !== id));
   };
-  const toggleEfetivada = (id) => { saveReservas(reservas.map(r => r.id===id ? {...r, efetivada: !r.efetivada} : r)); };
+  const toggleEfetivada = (id) => {
+    setReservas(prev => {
+      const nova = prev.map(r => r.id==id ? {...r, efetivada: !r.efetivada} : r);
+      const atualizada = nova.find(r => r.id==id);
+      if (atualizada) { setSincronizando(true); sbFetch("reservas", "POST", reservaParaBanco(atualizada)).finally(()=>setSincronizando(false)); }
+      return nova;
+    });
+  };
 
   const salvarApto = () => { if(!formApto.nome) return; const id=formApto.id||"apto"+Date.now(); const ex=aptos.find(a=>a.id===formApto.id); saveAptos(ex?aptos.map(a=>a.id===formApto.id?{...formApto}:a):[...aptos,{...formApto,id}]); setModalApto(false); setFormApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true}); };
   const salvarProp = () => { if(!formProp.nome) return; const id=formProp.id||"prop"+Date.now(); const ex=proprietarios.find(p=>p.id===formProp.id); saveProps(ex?proprietarios.map(p=>p.id===formProp.id?{...formProp}:p):[...proprietarios,{...formProp,id}]); setModalProp(false); setFormProp({id:"",nome:"",email:"",telefone:""}); };
@@ -620,13 +638,20 @@ function App() {
   const salvarDespesa = () => {
     if (!formDespesa.aptoId || !formDespesa.descricao || !formDespesa.valor) return;
     const despesaParsed = { ...formDespesa, valor: parseValor(formDespesa.valor) };
+    let despesaParaSalvar;
+    let nova;
     if (editDespesa !== null) {
       const existente = despesas.find(d => d.id === editDespesa);
       const comprovantesAntigos = existente ? existente.comprovantes : [];
-      saveDespesas(despesas.map(d => d.id === editDespesa ? {...despesaParsed, id: editDespesa, comprovantes: comprovantesAntigos} : d));
+      despesaParaSalvar = {...despesaParsed, id: editDespesa, comprovantes: comprovantesAntigos};
+      nova = despesas.map(d => d.id === editDespesa ? despesaParaSalvar : d);
     } else {
-      saveDespesas([...despesas, {...despesaParsed, id: Date.now()}]);
+      despesaParaSalvar = {...despesaParsed, id: Date.now()};
+      nova = [...despesas, despesaParaSalvar];
     }
+    setDespesas(nova);
+    setSincronizando(true);
+    sbFetch("despesas", "POST", despesaParaBanco(despesaParaSalvar)).finally(()=>setSincronizando(false));
     setModalDespesa(false); setEditDespesa(null); setFormDespesa(formDespesaVazia);
   };
   const abrirEditarDespesa = (d) => {
@@ -1105,8 +1130,13 @@ function App() {
                     let ar=reservasCalc.filter(r=>r.aptoId==a.id);
                     let despAptoMes = despesas.filter(d=>d.aptoId==a.id);
                     if (mesRepasse !== "todos") {
-                      ar = ar.filter(r => r.mes == parseInt(mesRepasse));
-                      despAptoMes = despAptoMes.filter(d => d.mes == parseInt(mesRepasse));
+                      const mesNum = parseInt(mesRepasse);
+                      ar = ar.filter(r => {
+                        // usa checkin real se disponível, senão usa campo mes
+                        const mesR = r.checkin ? new Date(r.checkin+"T00:00:00").getMonth() : r.mes;
+                        return mesR == mesNum;
+                      });
+                      despAptoMes = despAptoMes.filter(d => d.mes == mesNum);
                     }
                     const bruto=ar.reduce((s,r)=>s+r.valorBruto,0);
                     const desp=ar.reduce((s,r)=>s+r.totalDespesas,0);
