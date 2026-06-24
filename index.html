@@ -197,13 +197,10 @@ function gerarRelatorioPDF(prop, apto, mes, reservasDoMes, despesasDoMes, ocupac
   const bruto = reservasDoMes.reduce((s,r)=>s+r.valorBruto,0);
   const comPlat = reservasDoMes.reduce((s,r)=>s+r.comissaoPlat,0);
   const comAdm = reservasDoMes.reduce((s,r)=>s+r.comissaoAdm,0);
-  const limpezaReservas = reservasDoMes.reduce((s,r)=>s+r.limpeza,0);
-  const outrasReservas = reservasDoMes.reduce((s,r)=>s+r.outrasDespesas,0);
   const totalDespesasGerais = despesasDoMes.reduce((s,d)=>s+Number(d.valor||0),0);
-  const despesasOp = limpezaReservas + outrasReservas + totalDespesasGerais;
+  const despesasOp = totalDespesasGerais;
   const liquidoPlat = bruto - comPlat;
   const totalReceber = liquidoPlat - comAdm;
-  // Repasse líquido ao proprietário = Bruto - Comissão Plataforma - Comissão Administração - Despesas Operacionais (reservas + gerais)
   const repasseFinal = totalReceber - despesasOp;
   const percAdmMedio = liquidoPlat > 0 ? (comAdm / liquidoPlat * 100) : 0;
 
@@ -550,12 +547,12 @@ function App() {
   const despesasFiltradas = useMemo(() => despesas.filter(d=>(aptoFiltroDespesa==="todos"||d.aptoId==aptoFiltroDespesa)&&d.mes==mesFiltroDespesa), [despesas,aptoFiltroDespesa,mesFiltroDespesa]);
 
   const repasses = useMemo(() => proprietarios.map(p=>{
-    const aptosP = aptos.filter(a=>a.proprietario===p.id);
-    let reservasP = reservasCalc.filter(r=>aptosP.some(a=>a.id===r.aptoId));
+    const aptosP = aptos.filter(a=>a.proprietario==p.id);
+    let reservasP = reservasCalc.filter(r=>aptosP.some(a=>a.id==r.aptoId));
     let despesasP = despesas.filter(d=>aptosP.some(a=>a.id==d.aptoId));
     if (mesRepasse !== "todos") {
-      reservasP = reservasP.filter(r => r.mes === parseInt(mesRepasse));
-      despesasP = despesasP.filter(d => d.mes === parseInt(mesRepasse));
+      reservasP = reservasP.filter(r => r.mes == parseInt(mesRepasse));
+      despesasP = despesasP.filter(d => d.mes == parseInt(mesRepasse));
     }
     const liquidoReservas = reservasP.reduce((a,r)=>a+r.liquido,0);
     const totalDespesasGerais = despesasP.reduce((a,d)=>a+Number(d.valor||0),0);
