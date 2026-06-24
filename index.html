@@ -547,12 +547,12 @@ function App() {
     });
   }, [aptos, aptoFiltro, reservasCalc, visaoDash, mesDash]);
 
-  const despesasFiltradas = useMemo(() => despesas.filter(d=>(aptoFiltroDespesa==="todos"||d.aptoId===aptoFiltroDespesa)&&d.mes===mesFiltroDespesa), [despesas,aptoFiltroDespesa,mesFiltroDespesa]);
+  const despesasFiltradas = useMemo(() => despesas.filter(d=>(aptoFiltroDespesa==="todos"||d.aptoId==aptoFiltroDespesa)&&d.mes==mesFiltroDespesa), [despesas,aptoFiltroDespesa,mesFiltroDespesa]);
 
   const repasses = useMemo(() => proprietarios.map(p=>{
     const aptosP = aptos.filter(a=>a.proprietario===p.id);
     let reservasP = reservasCalc.filter(r=>aptosP.some(a=>a.id===r.aptoId));
-    let despesasP = despesas.filter(d=>aptosP.some(a=>a.id===d.aptoId));
+    let despesasP = despesas.filter(d=>aptosP.some(a=>a.id==d.aptoId));
     if (mesRepasse !== "todos") {
       reservasP = reservasP.filter(r => r.mes === parseInt(mesRepasse));
       despesasP = despesasP.filter(d => d.mes === parseInt(mesRepasse));
@@ -1105,11 +1105,11 @@ function App() {
                     ))}
                   </div>
                   {aptosP.map((a,j)=>{
-                    let ar=reservasCalc.filter(r=>r.aptoId===a.id);
-                    let despAptoMes = despesas.filter(d=>d.aptoId===a.id);
+                    let ar=reservasCalc.filter(r=>r.aptoId==a.id);
+                    let despAptoMes = despesas.filter(d=>d.aptoId==a.id);
                     if (mesRepasse !== "todos") {
-                      ar = ar.filter(r => r.mes === parseInt(mesRepasse));
-                      despAptoMes = despAptoMes.filter(d => d.mes === parseInt(mesRepasse));
+                      ar = ar.filter(r => r.mes == parseInt(mesRepasse));
+                      despAptoMes = despAptoMes.filter(d => d.mes == parseInt(mesRepasse));
                     }
                     const bruto=ar.reduce((s,r)=>s+r.valorBruto,0);
                     const desp=ar.reduce((s,r)=>s+r.totalDespesas,0);
