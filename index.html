@@ -56,15 +56,18 @@ async function sbUpsert(tabela, dados) {
 }
 
 async function sbPatch(tabela, id, dados) {
-  await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, {
+  const res = await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, {
     method: "PATCH",
     headers: {
       apikey: SB_KEY,
       Authorization: `Bearer ${SB_KEY}`,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
     },
     body: JSON.stringify(dados)
   });
+  const text = await res.text();
+  console.log("sbPatch", tabela, id, "→", res.status, text.slice(0,100));
 }
 
 async function sbDelete(tabela, id) {
@@ -128,8 +131,152 @@ async function comprimirImagem(dataUrl, tipo) {
 // ─────────────────────────────────────────────
 // GERADOR DE PDF
 // ─────────────────────────────────────────────
-function gerarPDF(prop, apto, mes, reservas, despesas) {
+function gerarPDFDireto(prop, apto, mes, reservas, despesas) {
   const nomeMes = MESES[mes];
+  const ano = 2026;
+  const bruto = reservas.reduce((s,r)=>s+Number(r.valor_bruto||0),0);
+  const comPlat = reservas.reduce((s,r)=>s+Number(r.comissao_plat||0),0);
+  const comAdm = reservas.reduce((s,r)=>s+Number(r.comissao_adm||0),0);
+  const totalDesp = despesas.reduce((s,d)=>s+Number(d.valor||0),0);
+  const liquidoPlat = bruto - comPlat;
+  const oc = calcOcupacao(reservas, mes, ano);
+  const percAdm = liquidoPlat>0 ? (comAdm/liquidoPlat*100).toFixed(0) : 0;
+
+  const porPlat = {};
+  reservas.forEach(r => { if(!porPlat[r.plataforma]) porPlat[r.plataforma]={bruto:0,qtd:0}; porPlat[r.plataforma].bruto+=Number(r.valor_bruto||0); porPlat[r.plataforma].qtd++; });
+  const maxPlat = Math.max(...Object.values(porPlat).map(p=>p.bruto),1);
+  const grafico = Object.entries(porPlat).map(([p,v])=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:120px"><span style="background:${COR_PLAT[p]||'#64748b'};color:#fff;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700">${p}</span> <span style="font-size:10px;color:#64748b">${v.qtd}x</span></div>
+      <div style="flex:1;background:#e2e8f0;border-radius:6px;height:14px;overflow:hidden"><div style="width:${(v.bruto/maxPlat*100).toFixed(0)}%;background:${COR_PLAT[p]||'#64748b'};height:100%;border-radius:6px"></div></div>
+      <div style="width:90px;text-align:right;font-weight:700;font-size:12px">${R(v.bruto)}</div>
+    </div>`).join("");
+
+  const linhasRes = reservas.map(r=>`
+    <tr>
+      <td>${r.hospede}</td>
+      <td><span style="background:${COR_PLAT[r.plataforma]||'#64748b'};color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700">${r.plataforma}</span></td>
+      <td>${fmtData(r.checkin)} a ${fmtData(r.checkout)}</td>
+      <td style="text-align:right">${R(r.valor_bruto)}</td>
+      <td style="text-align:right">${R(r.comissao_plat)}</td>
+      <td style="text-align:right"><b>${R(Number(r.valor_bruto||0)-Number(r.comissao_plat||0))}</b></td>
+    </tr>`).join("");
+
+  const linhasDesp = despesas.map(d=>`
+    <tr>
+      <td>${d.data ? fmtData(d.data) : "—"}</td>
+      <td><span style="background:#ede9fe;color:#5b21b6;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700">${d.categoria}</span></td>
+      <td>${d.descricao}</td>
+      <td style="text-align:right">${R(d.valor)}</td>
+    </tr>`).join("");
+
+  const comps = [];
+  despesas.forEach(d => {
+    (d.comprovantes||[]).forEach((c,i)=>{
+      comps.push(`<div style="margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px">
+        <div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:6px">${d.categoria} — ${d.descricao} (${R(d.valor)}) — ${c.nome||`Comprovante ${i+1}`}</div>
+        ${c.tipo?.startsWith("image") ? `<img src="${c.dataUrl}" style="max-width:280px;border-radius:6px;border:1px solid #cbd5e1"/>` : `<div style="font-size:11px;padding:8px;background:#fff;border-radius:4px">📄 ${c.nome}</div>`}
+      </div>`);
+    });
+  });
+
+  const w = window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Prestação de Contas ${nomeMes} ${ano} — ${apto.nome}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:Arial,sans-serif;padding:28px;color:#1e293b;max-width:820px;margin:0 auto;background:#fff}
+    h1{font-size:20px;color:#fff;background:linear-gradient(135deg,#7c3aed,#a78bfa);padding:16px 20px;border-radius:10px 10px 0 0;margin:0;font-weight:800}
+    .sub{font-size:12px;color:#475569;background:#f5f3ff;padding:12px 20px;border-radius:0 0 10px 10px;border:1px solid #ddd6fe;border-top:none;margin-bottom:20px}
+    h2{font-size:13px;background:#7c3aed;color:#fff;padding:8px 14px;margin:22px 0 10px;font-weight:700;border-radius:6px}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+    th,td{border:1px solid #e2e8f0;padding:7px 9px;text-align:left}
+    th{background:#ede9fe;color:#4c1d95;font-weight:700}
+    .resumo{display:flex;gap:0;border-radius:10px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .resumo>div{flex:1;padding:12px 10px;font-size:11px}
+    .resumo>div:nth-child(1){background:#f5f3ff;color:#4c1d95}
+    .resumo>div:nth-child(2){background:#fef2f2;color:#991b1b}
+    .resumo>div:nth-child(3){background:#fff7ed;color:#9a3412}
+    .resumo>div:nth-child(4){background:#fefce8;color:#854d0e}
+    .resumo .val{font-size:16px;font-weight:800;margin-top:4px}
+    .aviso{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#166534}
+    .final{background:#f5f3ff;font-weight:700}
+    .neg{color:#dc2626}
+    .oc{display:flex;gap:0;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .oc>div{flex:1;text-align:center;padding:12px;font-size:11px}
+    .oc>div:nth-child(1){background:#dcfce7;color:#166534}
+    .oc>div:nth-child(2){background:#f1f5f9;color:#475569}
+    .oc>div:nth-child(3){background:#ede9fe;color:#4c1d95}
+    .oc .num{font-size:26px;font-weight:800;margin-top:4px}
+    .barra{background:#e2e8f0;border-radius:6px;height:12px;overflow:hidden;margin:8px 0 4px}
+    .barra-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:6px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;background:#f5f3ff;padding:10px 16px;border-radius:8px;margin-bottom:16px}
+    .btn{border:none;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial}
+    .btn-fechar{background:#e2e8f0;color:#334155}
+    .btn-imprimir{background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff}
+    .footer{margin-top:28px;text-align:center;font-size:11px;color:#64748b;border-top:2px solid #ddd6fe;padding-top:12px}
+    @media print{.topbar{display:none}body{padding:10px}}
+  </style></head><body>
+  <div class="topbar">
+    <button class="btn btn-fechar" onclick="window.close()">✕ Fechar</button>
+    <button class="btn btn-imprimir" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <h1>PRESTAÇÃO DE CONTAS — TEMPORADA</h1>
+  <div class="sub">${apto.nome}${apto.endereco ? ` | ${apto.endereco}` : ""} | ${nomeMes}/${ano}<br>Proprietário: <b>${prop.nome}</b> | Administradora: <b>Casa by Milla</b></div>
+  <div class="aviso">✅ Os valores das hospedagens são creditados <b>diretamente pela plataforma</b> ao proprietário. Este relatório apresenta o resumo do período e as despesas do imóvel.</div>
+
+  <h2>1. RESUMO DO MÊS</h2>
+  <div class="resumo">
+    <div>Receita Bruta<div class="val">${R(bruto)}</div>${reservas.length} hóspede(s)</div>
+    <div>(–) Com. Plataformas<div class="val">${R(comPlat)}</div></div>
+    <div>(–) Com. Administradora<div class="val">${R(comAdm)}</div>${percAdm}% s/ líquido</div>
+    <div>(–) Despesas do Imóvel<div class="val">${R(totalDesp)}</div>limpeza e outros</div>
+  </div>
+
+  <h2>2. OCUPAÇÃO DO MÊS</h2>
+  <div class="oc">
+    <div>🟢 Dias Ocupados<div class="num">${oc.ocupados}</div></div>
+    <div>⬜ Dias Vagos<div class="num">${oc.vagos}</div></div>
+    <div>📊 Taxa de Ocupação<div class="num">${oc.taxa}%</div></div>
+  </div>
+  <div class="barra"><div class="barra-fill" style="width:${oc.taxa}%"></div></div>
+  <div style="text-align:center;font-size:11px;color:#64748b">${oc.diasNoMes} dias no mês de ${nomeMes}</div>
+
+  <h2>3. RECEITA POR PLATAFORMA</h2>
+  <div style="background:#f8fafc;border-radius:10px;padding:16px">${grafico}</div>
+
+  <h2>4. HOSPEDAGENS DO MÊS</h2>
+  <table>
+    <tr><th>Hóspede</th><th>Plataforma</th><th>Período</th><th>Valor Bruto</th><th>Com. Plataforma</th><th>Valor Líquido</th></tr>
+    ${linhasRes}
+    <tr class="final"><td colspan="3">TOTAL</td><td style="text-align:right">${R(bruto)}</td><td style="text-align:right">${R(comPlat)}</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
+  </table>
+
+  ${despesas.length>0 ? `<h2>5. DESPESAS DO IMÓVEL</h2>
+  <div style="font-size:11px;color:#64748b;margin-bottom:8px">⚠️ Diarista não incluída (paga diretamente pelo proprietário)</div>
+  <table>
+    <tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr>
+    ${linhasDesp}
+    <tr class="final"><td colspan="3">TOTAL DESPESAS</td><td style="text-align:right">${R(totalDesp)}</td></tr>
+  </table>` : ""}
+
+  <h2>${despesas.length>0?"6":"5"}. DEMONSTRATIVO FINANCEIRO</h2>
+  <table>
+    <tr><td>Receita Bruta Total</td><td style="text-align:right">${R(bruto)}</td></tr>
+    <tr><td class="neg">(-) Comissões das Plataformas</td><td style="text-align:right" class="neg">– ${R(comPlat)}</td></tr>
+    <tr class="final"><td>(=) Receita Líquida</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
+    <tr><td class="neg">(-) Comissão Administradora Casa by Milla (${percAdm}%)</td><td style="text-align:right" class="neg">– ${R(comAdm)}</td></tr>
+    <tr><td class="neg">(-) Despesas do Imóvel</td><td style="text-align:right" class="neg">– ${R(totalDesp)}</td></tr>
+    <tr class="final" style="background:#dcfce7;color:#166534"><td>✅ Valor já creditado pela plataforma ao proprietário</td><td style="text-align:right">${R(liquidoPlat)}</td></tr>
+  </table>
+
+  ${comps.length>0 ? `<h2>${despesas.length>0?"7":"6"}. COMPROVANTES DAS DESPESAS</h2>${comps.join("")}` : ""}
+
+  <div class="footer">${apto.endereco||""} — gerado em ${new Date().toLocaleDateString("pt-BR")}<br><b>Casa by Milla</b> — Gestão de Imóveis por Temporada</div>
+  </body></html>`);
+  w.document.close();
+}
+
+function gerarPDF(prop, apto, mes, reservas, despesas) {
   const ano = 2026;
   const bruto = reservas.reduce((s,r)=>s+Number(r.valor_bruto||0),0);
   const comPlat = reservas.reduce((s,r)=>s+Number(r.comissao_plat||0),0);
@@ -321,7 +468,7 @@ function App() {
   const depVazio = {aptoId:"",categoria:"Diarista",descricao:"",valor:"",mes:new Date().getMonth(),data:""};
   const [fRes, setFRes] = useState(resVazio);
   const [fDep, setFDep] = useState(depVazio);
-  const [fApto, setFApto] = useState({id:"",nome:"",endereco:"",proprietario:"",ativo:true});
+  const [fApto, setFApto] = useState({id:"",nome:"",endereco:"",proprietario:"",ativo:true,repasse_direto:false});
   const [fProp, setFProp] = useState({id:"",nome:"",email:"",telefone:""});
 
   // ── CARREGAR DO SUPABASE ──
@@ -473,12 +620,12 @@ function App() {
   const salvarApto = async () => {
     if (!fApto.nome) return;
     const id = fApto.id || "apto"+Date.now();
-    const reg = {id, nome:fApto.nome, endereco:fApto.endereco||"", proprietario:fApto.proprietario||"", ativo:fApto.ativo};
+    const reg = {id, nome:fApto.nome, endereco:fApto.endereco||"", proprietario:fApto.proprietario||"", ativo:fApto.ativo, repasse_direto:fApto.repasse_direto||false};
     setSalvando(true);
     await sbUpsert("aptos", reg);
     setSalvando(false);
     setAptos(prev=>{ const sem=prev.filter(a=>a.id!=id); return [...sem,reg]; });
-    setModalApto(false); setFApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true});
+    setModalApto(false); setFApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true,repasse_direto:false});
   };
 
   // ── SALVAR PROP ──
@@ -776,7 +923,7 @@ function App() {
         {tela==="aptos" && <>
           <div style={{...c.row,marginBottom:12}}>
             <div><div style={c.title}>Apartamentos</div><div style={c.sub}>{aptos.length} cadastrado(s)</div></div>
-            <button style={c.btn()} onClick={()=>{setFApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true});setModalApto(true);}}>+ Novo</button>
+            <button style={c.btn()} onClick={()=>{setFApto({id:"",nome:"",endereco:"",proprietario:"",ativo:true,repasse_direto:false});setModalApto(true);}}>+ Novo</button>
           </div>
           {aptos.map(a=>{
             const ar=reservas.filter(r=>r.apto_id==a.id);
@@ -789,7 +936,7 @@ function App() {
                 <div><div style={{fontSize:10,color:"#64748b"}}>Reservas</div><div style={{fontSize:18,fontWeight:800,color:"#38bdf8"}}>{ar.length}</div></div>
                 <div><div style={{fontSize:10,color:"#64748b"}}>Líquido 2026</div><div style={{fontSize:18,fontWeight:800,color:"#34d399"}}>{R(liq)}</div></div>
               </div>
-              <button style={c.btnSm()} onClick={()=>{setFApto({...a});setModalApto(true);}}>✏️ Editar</button>
+              <button style={c.btnSm()} onClick={()=>{setFApto({...a,repasse_direto:a.repasse_direto||false});setModalApto(true);}}>✏️ Editar</button>
             </div>;
           })}
         </>}
@@ -843,7 +990,8 @@ function App() {
                 // Busca TODAS as despesas do apto no mês, independente do apto_id exato
                 const mesN = parseInt(mesRepasse);
                 const todasDespMes = despesas.filter(d => d.mes==mesN && d.apto_id==a.id);
-                gerarPDF(p,a,mesN,a.reservas,todasDespMes);
+                if (a.repasse_direto) gerarPDFDireto(p,a,mesN,a.reservas,todasDespMes);
+                else gerarPDF(p,a,mesN,a.reservas,todasDespMes);
               }}>📄 Gerar Relatório PDF — {MESES[parseInt(mesRepasse)]}</button>}
             </div>)}
           </div>)}
@@ -948,6 +1096,14 @@ function App() {
           <div style={c.frow}><label style={c.lbl}>Endereço</label><input style={c.inp} value={fApto.endereco} onChange={e=>setFApto({...fApto,endereco:e.target.value})} placeholder="Rua, número, bairro..."/></div>
           <div style={c.frow}><label style={c.lbl}>Proprietário</label><select style={c.inp} value={fApto.proprietario} onChange={e=>setFApto({...fApto,proprietario:e.target.value})}><option value="">Selecione...</option>{props.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}</select></div>
           <div style={c.frow}><label style={c.lbl}>Status</label><select style={c.inp} value={fApto.ativo?"ativo":"inativo"} onChange={e=>setFApto({...fApto,ativo:e.target.value==="ativo"})}><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+          <div style={c.frow}>
+            <label style={c.lbl}>Modelo de Repasse</label>
+            <div style={{display:"flex",gap:8}}>
+              <button type="button" style={{...c.btn(!fApto.repasse_direto?"#38bdf8":"#334155"),flex:1,justifyContent:"center",color:!fApto.repasse_direto?"#0f172a":"#94a3b8",fontSize:12}} onClick={()=>setFApto({...fApto,repasse_direto:false})}>💰 Repasse mensal</button>
+              <button type="button" style={{...c.btn(fApto.repasse_direto?"#a78bfa":"#334155"),flex:1,justifyContent:"center",color:fApto.repasse_direto?"#0f172a":"#94a3b8",fontSize:12}} onClick={()=>setFApto({...fApto,repasse_direto:true})}>🏦 Direto pela plataforma</button>
+            </div>
+            <div style={{fontSize:11,color:"#64748b",marginTop:5}}>{fApto.repasse_direto?"Proprietário recebe direto da plataforma — relatório sem repasse":"Proprietário recebe via transferência mensal"}</div>
+          </div>
           <div style={{display:"flex",gap:10}}>
             <button style={{...c.btn("#334155"),flex:1,justifyContent:"center"}} onClick={()=>setModalApto(false)}>Cancelar</button>
             <button style={{...c.btn(),flex:1,justifyContent:"center"}} onClick={salvarApto}>{salvando?"Salvando...":"Salvar"}</button>
