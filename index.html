@@ -277,6 +277,7 @@ function gerarPDFDireto(prop, apto, mes, reservas, despesas) {
 }
 
 function gerarPDF(prop, apto, mes, reservas, despesas) {
+  const nomeMes = MESES[mes];
   const ano = 2026;
   const bruto = reservas.reduce((s,r)=>s+Number(r.valor_bruto||0),0);
   const comPlat = reservas.reduce((s,r)=>s+Number(r.comissao_plat||0),0);
